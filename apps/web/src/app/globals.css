@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+/* Dell '96 design system tokens — see design/DESIGN-dell-1996.md. */
+@theme {
+  --color-ink: #000000;
+  --color-canvas: #ffffff;
+  --color-primary: #e91d2a;
+  --color-sticker: #fcc20f;
+  --color-stripe: #6a26a4;
+  --color-link: #0000ee;
+
+  --color-tint-olive: #8e8a25;
+  --color-tint-sage: #b3bd95;
+  --color-tint-salmon: #d77a7a;
+  --color-tint-peach: #e6915d;
+  --color-tint-lime: #c0d4a7;
+  --color-tint-sky: #9ab6c8;
+  --color-tint-steel: #a5b8c0;
+  --color-tint-periwinkle: #8c9ae0;
+
+  --font-display: "Arial Black", "Arial Bold", Arial, Helvetica, sans-serif;
+  --font-ui: Helvetica, Arial, sans-serif;
+  --font-body: "Times New Roman", Times, serif;
+  --font-mono: ui-monospace, Menlo, monospace;
+
+  --shadow-hard: 2px 2px 0 #000;
+  --shadow-hard-lg: 3px 3px 0 #000;
+  --shadow-hard-grey: 2px 2px 0 #555;
+
+  --radius-none: 0px;
+}
+
+/* Base styles live in the base layer so Tailwind utilities can override them. */
+@layer base {
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    background: var(--color-ink);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  /* Classic Mosaic-blue inline links; chrome links opt out with text-* utilities. */
+  a {
+    color: var(--color-link);
+  }
+  a:hover {
+    color: var(--color-primary);
+  }
+}
+
+/* Beveled GIF-style photo placeholder */
+.photo-stripes {
+  background: repeating-linear-gradient(45deg, #eee, #eee 6px, #f8f8f8 6px, #f8f8f8 12px);
+}
