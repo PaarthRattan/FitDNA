@@ -20,7 +20,8 @@ Visual language is the Dell '96 catalog system: black page frame, ribbon cards, 
 ```bash
 cd apps/web
 npm install
-cp .env.example .env.local   # optional: add Supabase keys to enable sign-in
+npm run db:start             # optional: local Supabase in Docker (needs Docker Desktop running)
+cp .env.example .env.local   # then fill in the values `npx supabase status` prints
 npm run dev      # http://localhost:3000
 npm test         # fit engine + database (RLS) tests
 npm run build && npm run start

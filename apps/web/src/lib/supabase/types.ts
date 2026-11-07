@@ -1,175 +1,194 @@
-/**
- * Database types in the shape `supabase gen types typescript` produces.
- *
- * Hand-written for now because generating them needs a running database (Docker or a
- * linked project). Once the project is linked, regenerate with `npm run db:types` and
- * commit the result; it replaces this file entirely.
- */
 
-export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
-
-type GarmentCategory = "tee" | "shirt" | "knit" | "jacket";
-type FitZone = "tight" | "fitted" | "ideal" | "relaxed" | "oversized";
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
-  public: {
-    Tables: {
-      consents: {
-        Row: {
-          id: number;
-          user_id: string;
-          scope: "data" | "scan";
-          action: "granted" | "withdrawn";
-          policy_version: string;
-          region: string | null;
-          created_at: string;
-        };
-        Insert: {
-          id?: never;
-          user_id: string;
-          scope: "data" | "scan";
-          action: "granted" | "withdrawn";
-          policy_version: string;
-          region?: string | null;
-          created_at?: string;
-        };
-        Update: {
-          id?: never;
-          user_id?: string;
-          scope?: "data" | "scan";
-          action?: "granted" | "withdrawn";
-          policy_version?: string;
-          region?: string | null;
-          created_at?: string;
-        };
-        Relationships: [];
-      };
-      body_measurements: {
-        Row: {
-          id: string;
-          user_id: string;
-          name: "chest" | "shoulder" | "waist" | "hip" | "arm" | "torso";
-          value_cm: number;
-          range_cm: number | null;
-          confidence: number;
-          source: "manual" | "scan";
-          vendor_job_id: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          name: "chest" | "shoulder" | "waist" | "hip" | "arm" | "torso";
-          value_cm: number;
-          range_cm?: number | null;
-          confidence: number;
-          source: "manual" | "scan";
-          vendor_job_id?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          name?: "chest" | "shoulder" | "waist" | "hip" | "arm" | "torso";
-          value_cm?: number;
-          range_cm?: number | null;
-          confidence?: number;
-          source?: "manual" | "scan";
-          vendor_job_id?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      fit_preferences: {
-        Row: {
-          id: string;
-          user_id: string;
-          category: GarmentCategory;
-          text: string;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          category: GarmentCategory;
-          text: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          category?: GarmentCategory;
-          text?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      reference_garments: {
-        Row: {
-          id: string;
-          user_id: string;
-          title: string;
-          category: GarmentCategory;
-          size_label: string | null;
-          chest_cm: number | null;
-          chest_basis: "flat" | "circumference";
-          shoulder_cm: number | null;
-          length_cm: number | null;
-          sleeve_cm: number | null;
-          stretch: "none" | "low" | "medium" | "high";
-          fit_zone: FitZone;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          title: string;
-          category: GarmentCategory;
-          size_label?: string | null;
-          chest_cm?: number | null;
-          chest_basis?: "flat" | "circumference";
-          shoulder_cm?: number | null;
-          length_cm?: number | null;
-          sleeve_cm?: number | null;
-          stretch?: "none" | "low" | "medium" | "high";
-          fit_zone: FitZone;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          title?: string;
-          category?: GarmentCategory;
-          size_label?: string | null;
-          chest_cm?: number | null;
-          chest_basis?: "flat" | "circumference";
-          shoulder_cm?: number | null;
-          length_cm?: number | null;
-          sleeve_cm?: number | null;
-          stretch?: "none" | "low" | "medium" | "high";
-          fit_zone?: FitZone;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-    };
-    Views: { [_ in never]: never };
-    Functions: {
-      has_current_consent: {
-        Args: { p_scope: string };
-        Returns: boolean;
-      };
-    };
-    Enums: { [_ in never]: never };
-    CompositeTypes: { [_ in never]: never };
-  };
-};
+  
+  "public": {
+          Tables: {
+            "body_measurements": {
+                  Row: {
+                    "confidence": number,"created_at": string,"id": string,"name": string,"range_cm": number | null,"source": string,"updated_at": string,"user_id": string,"value_cm": number,"vendor_job_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "confidence": number,"created_at"?: string,"id"?: string,"name": string,"range_cm"?: number | null,"source": string,"updated_at"?: string,"user_id": string,"value_cm": number,"vendor_job_id"?: string | null
+                  }
+                  Update: {
+                    "confidence"?: number,"created_at"?: string,"id"?: string,"name"?: string,"range_cm"?: number | null,"source"?: string,"updated_at"?: string,"user_id"?: string,"value_cm"?: number,"vendor_job_id"?: string | null
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"consents": {
+                  Row: {
+                    "action": string,"created_at": string,"id": number,"policy_version": string,"region": string | null,"scope": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "action": string,"created_at"?: string,"id"?: never,"policy_version": string,"region"?: string | null,"scope": string,"user_id": string
+                  }
+                  Update: {
+                    "action"?: string,"created_at"?: string,"id"?: never,"policy_version"?: string,"region"?: string | null,"scope"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"fit_preferences": {
+                  Row: {
+                    "category": string,"created_at": string,"id": string,"text": string,"updated_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "category": string,"created_at"?: string,"id"?: string,"text": string,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "category"?: string,"created_at"?: string,"id"?: string,"text"?: string,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"reference_garments": {
+                  Row: {
+                    "category": string,"chest_basis": string,"chest_cm": number | null,"created_at": string,"fit_zone": string,"id": string,"length_cm": number | null,"shoulder_cm": number | null,"size_label": string | null,"sleeve_cm": number | null,"stretch": string,"title": string,"updated_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "category": string,"chest_basis"?: string,"chest_cm"?: number | null,"created_at"?: string,"fit_zone": string,"id"?: string,"length_cm"?: number | null,"shoulder_cm"?: number | null,"size_label"?: string | null,"sleeve_cm"?: number | null,"stretch"?: string,"title": string,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "category"?: string,"chest_basis"?: string,"chest_cm"?: number | null,"created_at"?: string,"fit_zone"?: string,"id"?: string,"length_cm"?: number | null,"shoulder_cm"?: number | null,"size_label"?: string | null,"sleeve_cm"?: number | null,"stretch"?: string,"title"?: string,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                }
+          }
+          Views: {
+            [_ in never]: never
+          }
+          Functions: {
+            "has_current_consent":
+{ Args: { "p_scope": string }; Returns: boolean
+                           }
+          }
+          Enums: {
+            [_ in never]: never
+          }
+          CompositeTypes: {
+            [_ in never]: never
+          }
+        }
+}
+
+type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+  ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never
+> = DefaultSchemaEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+  : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  : never
+
+export const Constants = {
+  "public": {
+          Enums: {
+            
+          }
+        }
+} as const

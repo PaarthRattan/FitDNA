@@ -1,6 +1,7 @@
 -- A minimal stand-in for the parts of a Supabase database that our migrations and
 -- row-level security rely on, so they can be tested in PGlite without Docker.
 -- Test-only: never apply this to a real Supabase project, which already has all of it.
+-- It lives outside supabase/tests/ so `supabase test db` (pgTAP) never picks it up.
 
 create schema auth;
 

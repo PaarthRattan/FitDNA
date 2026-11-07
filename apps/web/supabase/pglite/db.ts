@@ -10,7 +10,7 @@ const SUPABASE_DIR = fileURLToPath(new URL("..", import.meta.url));
  */
 export async function freshDatabase(): Promise<PGlite> {
   const db = new PGlite();
-  await db.exec(readFileSync(`${SUPABASE_DIR}tests/supabase-shim.sql`, "utf8"));
+  await db.exec(readFileSync(`${SUPABASE_DIR}pglite/supabase-shim.sql`, "utf8"));
   const migrations = readdirSync(`${SUPABASE_DIR}migrations`)
     .filter((f) => f.endsWith(".sql"))
     .sort();
