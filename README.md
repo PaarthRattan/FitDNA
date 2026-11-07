@@ -28,4 +28,4 @@ npm run build && npm run start
 npm run lint
 ```
 
-Without Supabase settings the app runs signed out on the demo data in `apps/web/src/lib/data.ts`. Pages move to the database as the milestones in `design/ROADMAP.md` land; the fit engine (`apps/web/src/lib/fit/`) is already real.
+The fit engine and the Fit Passport (sign-in, consent, measurements, reference garments) are real. Search and the fit map still show mock listings from `apps/web/src/lib/data.ts` until listing import lands (see the milestones in `design/ROADMAP.md`). Without Supabase settings, signed-in pages redirect to `/login`.

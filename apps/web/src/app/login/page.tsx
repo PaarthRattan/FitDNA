@@ -23,6 +23,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
   const params = await searchParams;
   const next = safeNext(first(params.next));
   const error = ERRORS[first(params.error) ?? ""];
+  const deleted = first(params.deleted) === "1";
   const user = await getUser();
   const configured = supabaseEnv() !== null;
 
@@ -36,6 +37,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
             <CardTitle>{user ? "YOU'RE SIGNED IN" : "EMAIL A SIGN-IN LINK"}</CardTitle>
           </CardTitleBar>
           <div className="p-4 flex flex-col gap-3 font-body text-sm">
+            {deleted && <p role="status">Your account and all of its data have been deleted.</p>}
             {error && (
               <p role="alert" className="text-primary">
                 {error}

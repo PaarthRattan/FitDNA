@@ -1,108 +1,169 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { FooterNav, TopBanner } from "@/components/chrome";
-import { Button, Card, CardTitleBar, CardTitle, ConfidenceBar, CtaBlock, Eyebrow, Photo, Sticker, TD, TD_BOLD, TH } from "@/components/ui";
-import { FIT_PREFERENCES, MEASUREMENTS, PASSPORT, REFERENCE_SLOTS, SITE } from "@/lib/data";
+import {
+  Button,
+  Card,
+  CardSub,
+  CardTitle,
+  CardTitleBar,
+  ChipRow,
+  ConfidenceBar,
+  CtaBlock,
+  Eyebrow,
+  TD,
+  TD_BOLD,
+  TH,
+} from "@/components/ui";
+import { FIT_ZONES } from "@/lib/fit-zones";
+import { loadPassport } from "@/lib/db/passport";
+import { formatCm } from "@/lib/fit/templates";
+import { BODY_FIELDS } from "@/lib/passport/fields";
+import { asZone, categoryLabel, measurementChips } from "@/lib/passport/mappers";
 
 export const metadata: Metadata = { title: "Fit Passport" };
 
-export default function PassportPage() {
-  const scanned = REFERENCE_SLOTS.filter((r) => !r.empty).length;
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+const SAVED: Record<string, string> = {
+  measurements: "Measurements saved.",
+  garment: "Garment saved.",
+  deleted: "Garment deleted.",
+  preferences: "Fit notes saved.",
+};
+
+const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
+
+export default async function PassportPage({ searchParams }: { searchParams: SearchParams }) {
+  const saved = SAVED[first((await searchParams).saved) ?? ""];
+  const { consent, measurements, references, preferences, status } = await loadPassport("/passport");
+  const measured = new Map(measurements.map((m) => [m.name, m]));
+
   return (
     <>
-      <TopBanner title="Fit Passport" callout={`Scan of ${PASSPORT.lastScan}`} />
+      <TopBanner title="Fit Passport" callout={`Passport ${status.pct}%`} />
       <Eyebrow tint="salmon">Your Fit Passport</Eyebrow>
 
       <main className="flex flex-col md:flex-row gap-5 p-5 flex-1">
-        {/* Avatar column */}
         <div className="md:w-[250px] shrink-0 flex flex-col gap-3">
-          <div className="relative">
-            <Photo label="3D body avatar render (front view, fit-zone overlay)" className="h-[340px] p-3" />
-            {SITE.showStickers && PASSPORT.rescanDue && (
-              <Sticker rotate={6} className="absolute -right-2.5 -top-2.5">
-                RE-SCAN DUE
-              </Sticker>
+          {saved && (
+            <p role="status" className="border border-ink bg-tint-lime px-3 py-2 font-ui font-bold text-xs">
+              {saved}
+            </p>
+          )}
+          <CtaBlock>
+            {status.next ? (
+              <>
+                Your Fit Passport is <b>{status.pct}% complete</b>. {status.next.why}
+                <div className="mt-3">
+                  <Button href={status.next.href}>{status.next.label}</Button>
+                </div>
+              </>
+            ) : (
+              <>
+                Your Fit Passport is <b>complete</b>. Listings are compared against your own measurements and garments.
+              </>
             )}
-          </div>
-          <div className="flex gap-2">
-            <Button className="flex-1" href="/passport">
-              New scan
-            </Button>
-            <Button className="flex-1" variant="secondary" href="/settings">
-              Edit
-            </Button>
-          </div>
-          <CtaBlock className="text-[13px] p-3">
-            Raw scan photos were <b>deleted after processing</b>. Only measurements and your avatar mesh are stored —
-            encrypted, never sold.
           </CtaBlock>
+          <div className="border border-ink p-3 font-body text-[13px] leading-[1.4]">
+            Your measurements are stored encrypted, never sold, and never sent to AI models.{" "}
+            <Link href="/settings">Manage or delete your data</Link>.
+          </div>
         </div>
 
-        {/* Measurements column */}
         <div className="flex-1 flex flex-col gap-4 min-w-0">
           <Card>
             <CardTitleBar>
-              <CardTitle>BODY MEASUREMENTS — ESTIMATED FROM GUIDED SCAN</CardTitle>
+              <CardTitle>BODY MEASUREMENTS</CardTitle>
+              <CardSub>Entered by you with a tape</CardSub>
+              <span className="flex-1" />
+              {consent.granted && (
+                <Button size="sm" variant="secondary" href="/passport/measure">
+                  Edit
+                </Button>
+              )}
             </CardTitleBar>
-            <div className="overflow-x-auto">
-              <table className="border-collapse w-full">
-                <thead>
-                  <tr className="bg-tint-steel">
-                    <th className={TH}>MEASUREMENT</th>
-                    <th className={TH}>VALUE</th>
-                    <th className={TH}>RANGE</th>
-                    <th className={TH}>CONFIDENCE</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {MEASUREMENTS.map((m) => (
-                    <tr key={m.name}>
-                      <td className={TD}>{m.name}</td>
-                      <td className={TD_BOLD}>{m.value}</td>
-                      <td className={`${TD} text-[#333]`}>{m.range}</td>
-                      <td className={TD}>
-                        <ConfidenceBar pct={m.confidence} />
-                      </td>
+            {consent.granted ? (
+              <div className="overflow-x-auto">
+                <table className="border-collapse w-full">
+                  <thead>
+                    <tr className="bg-tint-steel">
+                      <th className={TH}>MEASUREMENT</th>
+                      <th className={TH}>VALUE</th>
+                      <th className={`${TH} hidden sm:table-cell`}>RANGE</th>
+                      <th className={TH}>CONFIDENCE</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-
-          <Card>
-            <CardTitleBar>
-              <CardTitle>FIT PREFERENCES — WHAT “GOOD FIT” MEANS TO YOU</CardTitle>
-            </CardTitleBar>
-            <div className="bg-tint-lime px-4 py-3 flex flex-col gap-2">
-              {FIT_PREFERENCES.map((pf) => (
-                <div key={pf.category} className="flex items-baseline gap-2.5 font-body text-sm">
-                  <span className="font-ui font-bold text-xs bg-canvas border border-ink px-2 py-0.5 shrink-0">
-                    {pf.category}
-                  </span>
-                  <span>{pf.text}</span>
+                  </thead>
+                  <tbody>
+                    {BODY_FIELDS.map((field) => {
+                      const m = measured.get(field.name);
+                      return (
+                        <tr key={field.name}>
+                          <td className={TD}>{field.label}</td>
+                          <td className={`${TD_BOLD} whitespace-nowrap`}>{m ? `${formatCm(m.value_cm)} cm` : "—"}</td>
+                          <td className={`${TD} text-[#333] whitespace-nowrap hidden sm:table-cell`}>{m?.range_cm ? `±${formatCm(m.range_cm)} cm` : "—"}</td>
+                          <td className={TD}>{m ? <ConfidenceBar pct={m.confidence} /> : <Link href="/passport/measure">Add</Link>}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="px-4 py-3 font-body text-sm flex flex-col gap-3">
+                <p>Before you add body measurements, we&apos;ll explain what we keep and ask for your consent.</p>
+                <div>
+                  <Button href="/passport/consent?next=/passport/measure">Review and continue</Button>
                 </div>
+              </div>
+            )}
+          </Card>
+
+          <Card>
+            <CardTitleBar>
+              <CardTitle>REFERENCE GARMENTS — {references.length}</CardTitle>
+              <CardSub>Pieces you own; listings are compared against them</CardSub>
+            </CardTitleBar>
+            <div className="px-4 py-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {references.map((r) => (
+                <Link
+                  key={r.id}
+                  href={`/passport/garments/${r.id}`}
+                  className={`border border-ink ${FIT_ZONES[asZone(r.fit_zone)].bg} p-3 text-ink no-underline hover:text-ink hover:outline hover:outline-2 hover:outline-ink`}
+                >
+                  <div className="font-ui font-bold text-sm">{r.title}</div>
+                  <div className="font-body text-xs mb-2">
+                    {categoryLabel(r.category)}
+                    {r.size_label ? ` · size ${r.size_label}` : ""} · fits you {FIT_ZONES[asZone(r.fit_zone)].label.toLowerCase()}
+                  </div>
+                  <ChipRow chips={measurementChips(r)} />
+                </Link>
               ))}
+              <Link
+                href="/passport/garments/new"
+                className="border border-ink border-dashed bg-canvas p-3 flex items-center justify-center font-ui font-bold text-xs text-ink no-underline hover:bg-sticker hover:text-ink min-h-20"
+              >
+                + ADD A REFERENCE GARMENT
+              </Link>
             </div>
           </Card>
 
           <Card>
             <CardTitleBar>
-              <CardTitle>
-                REFERENCE GARMENTS — {scanned} OF {REFERENCE_SLOTS.length} SCANNED
-              </CardTitle>
+              <CardTitle>FIT NOTES — WHAT “GOOD FIT” MEANS TO YOU</CardTitle>
+              <span className="flex-1" />
+              <Button size="sm" variant="secondary" href="/passport/preferences">
+                Edit
+              </Button>
             </CardTitleBar>
-            <div className="bg-tint-sky px-4 py-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {REFERENCE_SLOTS.map((r) => (
-                <div
-                  key={r.name}
-                  className="border border-ink bg-canvas p-2 font-body text-xs leading-[1.35] text-center"
-                >
-                  <div className="photo-stripes h-14 border border-ink mb-1.5 flex items-center justify-center font-mono text-[10px] text-[#666]">
-                    {r.photo}
-                  </div>
-                  <b className="font-ui text-[11px]">{r.name}</b>
-                  <br />
-                  {r.role}
+            <div className="bg-tint-lime px-4 py-3 flex flex-col gap-2 font-body text-sm">
+              {preferences.length === 0 && <p>No notes yet. Describe how you like each kind of garment to fit.</p>}
+              {preferences.map((p) => (
+                <div key={p.category} className="flex items-baseline gap-2.5">
+                  <span className="font-ui font-bold text-xs bg-canvas border border-ink px-2 py-0.5 shrink-0 uppercase">
+                    {categoryLabel(p.category)}
+                  </span>
+                  <span>{p.text}</span>
                 </div>
               ))}
             </div>

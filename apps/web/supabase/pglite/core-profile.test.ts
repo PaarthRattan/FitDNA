@@ -149,6 +149,61 @@ describe("consent gate on body measurements", () => {
   });
 });
 
+describe("upserts, which is how the app saves", () => {
+  const upsert = (owner: string, value: number) =>
+    db.query(
+      `insert into body_measurements (user_id, name, value_cm, confidence, source)
+       values ($1, 'chest', $2, 60, 'manual')
+       on conflict (user_id, name) do update set value_cm = excluded.value_cm`,
+      [owner, value],
+    );
+
+  it("updates an existing measurement in place when consent is current", async () => {
+    await as(db, ALICE, async () => {
+      await grant(ALICE);
+      await upsert(ALICE, 96);
+      await upsert(ALICE, 97.5);
+    });
+    const { rows } = await db.query("select value_cm from body_measurements");
+    expect(rows).toEqual([{ value_cm: "97.5" }]);
+  });
+
+  it("refuses the update after consent is withdrawn", async () => {
+    await as(db, ALICE, async () => {
+      await grant(ALICE);
+      await upsert(ALICE, 96);
+      await withdraw(ALICE);
+    });
+    await expect(as(db, ALICE, () => upsert(ALICE, 97))).rejects.toThrow(/row-level security/);
+  });
+
+  it("can't overwrite another user's row through the conflict", async () => {
+    await as(db, ALICE, async () => {
+      await grant(ALICE);
+      await upsert(ALICE, 96);
+    });
+    await as(db, BOB, () => grant(BOB));
+    await expect(as(db, BOB, () => upsert(ALICE, 50))).rejects.toThrow(/row-level security/);
+    const { rows } = await db.query("select value_cm from body_measurements");
+    expect(rows).toEqual([{ value_cm: "96.0" }]);
+  });
+
+  it("upserts fit preferences per category", async () => {
+    const save = (text: string) =>
+      db.query(
+        `insert into fit_preferences (user_id, category, text) values ($1, 'knit', $2)
+         on conflict (user_id, category) do update set text = excluded.text`,
+        [ALICE, text],
+      );
+    await as(db, ALICE, async () => {
+      await save("relaxed");
+      await save("relaxed body, short sleeves");
+    });
+    const { rows } = await db.query("select text from fit_preferences");
+    expect(rows).toEqual([{ text: "relaxed body, short sleeves" }]);
+  });
+});
+
 describe("consents are append-only", () => {
   it("can't be edited or deleted by their owner", async () => {
     await as(db, ALICE, () => grant(ALICE));

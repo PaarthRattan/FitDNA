@@ -1,37 +1,35 @@
 import Link from "next/link";
 import { FitZoneLegend, FooterNav, ScanSticker, SiteNav, TopBanner } from "@/components/chrome";
-import {
-  Button,
-  Card,
-  CardSub,
-  CardTitle,
-  CardTitleBar,
-  ChipRow,
-  CtaBlock,
-  Eyebrow,
-  Photo,
-  Sticker,
-  TD,
-  TD_BOLD,
-  TH,
-} from "@/components/ui";
-import { GARMENTS, PASSPORT, PREDICTIONS, SITE, type Garment } from "@/lib/data";
+import { Button, Card, CardSub, CardTitle, CardTitleBar, ChipRow, CtaBlock, Eyebrow, Sticker } from "@/components/ui";
+import { SITE } from "@/lib/data";
+import { loadPassport } from "@/lib/db/passport";
 import { FIT_ZONES } from "@/lib/fit-zones";
+import { asZone, categoryLabel, measurementChips, type ReferenceRow } from "@/lib/passport/mappers";
 
-export default function WardrobePage() {
+export default async function WardrobePage() {
+  const { references, status } = await loadPassport("/");
+
   return (
     <>
-      <TopBanner title={SITE.tagline} sticker={<ScanSticker />} callout={`Passport ${PASSPORT.completePct}%`} />
+      <TopBanner title={SITE.tagline} sticker={<ScanSticker />} callout={`Passport ${status.pct}%`} />
 
       <div className="flex flex-col md:flex-row flex-1">
         {/* Left rail */}
         <aside className="md:w-[230px] md:border-r border-b md:border-b-0 border-ink p-4 flex flex-col gap-4 shrink-0">
           <SiteNav />
           <CtaBlock>
-            Your Fit Passport is <b>{PASSPORT.completePct}% complete</b>. {PASSPORT.nudge}
-            <div className="mt-3">
-              <Button href="/passport">Add reference</Button>
-            </div>
+            {status.next ? (
+              <>
+                Your Fit Passport is <b>{status.pct}% complete</b>. {status.next.why}
+                <div className="mt-3">
+                  <Button href={status.next.href}>{status.next.label}</Button>
+                </div>
+              </>
+            ) : (
+              <>
+                Your Fit Passport is <b>complete</b>.
+              </>
+            )}
           </CtaBlock>
           <FitZoneLegend />
         </aside>
@@ -40,46 +38,25 @@ export default function WardrobePage() {
         <main className="flex-1 p-5 pb-6 flex flex-col gap-5 min-w-0">
           <Eyebrow tint="olive">Your wardrobe</Eyebrow>
 
-          {GARMENTS.map((g) => (
-            <GarmentCard key={g.id} garment={g} />
-          ))}
+          {references.length === 0 ? (
+            <div className="border border-ink p-5 font-body text-sm flex flex-col gap-3">
+              <p>
+                Start with two or three pieces you own and know well: a tee, a knit, a jacket. FitDNA compares every
+                listing against them.
+              </p>
+              <div>
+                <Button href="/passport/garments/new">Add a reference garment</Button>
+              </div>
+            </div>
+          ) : (
+            references.map((r) => <GarmentCard key={r.id} garment={r} />)
+          )}
 
           <Eyebrow tint="sky" size="md">
             Recent predictions
           </Eyebrow>
-          <div className="overflow-x-auto">
-            <table className="border-collapse w-full border border-ink">
-              <thead>
-                <tr>
-                  <th className={TH}>ITEM</th>
-                  <th className={TH}>SIZE</th>
-                  <th className={TH}>PREDICTION</th>
-                  <th className={TH}>CONFIDENCE</th>
-                  <th className={TH}>OUTCOME</th>
-                </tr>
-              </thead>
-              <tbody>
-                {PREDICTIONS.map((p) => {
-                  const zone = FIT_ZONES[p.zone];
-                  return (
-                    <tr key={p.item}>
-                      <td className={TD}>{p.item}</td>
-                      <td className={TD}>{p.size}</td>
-                      <td className={TD}>
-                        <span className={`${zone.bg} border border-ink px-1.5 py-px font-ui font-bold text-[11px]`}>
-                          {zone.label}
-                        </span>{" "}
-                        {p.note}
-                      </td>
-                      <td className={TD_BOLD}>{p.confidence}%</td>
-                      <td className={TD}>
-                        {p.outcome === "Awaiting fit check" ? <Link href="/feedback">{p.outcome}</Link> : p.outcome}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="border border-ink p-5 font-body text-sm">
+            No predictions yet. When you check a listing&apos;s fit, it shows up here with how it turned out.
           </div>
         </main>
       </div>
@@ -89,26 +66,30 @@ export default function WardrobePage() {
   );
 }
 
-/** Ribbon card with the garment photo notched into the right edge. */
-function GarmentCard({ garment: g }: { garment: Garment }) {
-  const zone = FIT_ZONES[g.zone];
+/** Ribbon card: white title bar over the garment's fit-zone tint. */
+function GarmentCard({ garment: g }: { garment: ReferenceRow }) {
+  const zone = FIT_ZONES[asZone(g.fit_zone)];
+  const category = categoryLabel(g.category);
   return (
     <Card>
       <CardTitleBar>
-        <CardTitle>{g.title}</CardTitle>
-        <CardSub>{g.sub}</CardSub>
+        <CardTitle>
+          <Link href={`/passport/garments/${g.id}`} className="text-ink hover:text-primary">
+            {g.title.toUpperCase()}
+          </Link>
+        </CardTitle>
+        <CardSub>
+          Reference · {category.toLowerCase()}
+          {g.size_label ? ` · size ${g.size_label}` : ""}
+        </CardSub>
       </CardTitleBar>
-      <div className={`${zone.bg} px-4 py-3 sm:pr-[200px] font-body text-sm leading-[1.4] min-h-16`}>
-        {g.body}
-        <ChipRow chips={g.chips} className="mt-2" />
+      <div className={`${zone.bg} px-4 py-3 font-body text-sm leading-[1.4]`}>
+        Fits you {zone.label.toLowerCase()}. Every {category.toLowerCase()} listing is compared against this piece.
+        <ChipRow chips={measurementChips(g)} className="mt-2" />
       </div>
-      <Photo
-        label={g.photo}
-        className="hidden sm:flex absolute right-3.5 -top-2 -bottom-2 w-[150px]"
-      />
-      {SITE.showStickers && g.sticker && (
-        <Sticker rotate={-8} className="absolute right-2 sm:right-[150px] -top-3">
-          {g.sticker}
+      {SITE.showStickers && (
+        <Sticker rotate={-8} className="absolute right-2 -top-3">
+          REFERENCE
         </Sticker>
       )}
     </Card>

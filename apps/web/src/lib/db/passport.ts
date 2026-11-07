@@ -1,0 +1,84 @@
+import "server-only";
+import { createClient } from "@/lib/supabase/server";
+import { isUuid } from "@/lib/passport/parse";
+import { passportStatus } from "@/lib/passport/status";
+import { requireUser } from "./auth";
+
+/**
+ * Reads for the Fit Passport. Every function checks the user first; row-level
+ * security then limits each query to that user's rows, and the explicit
+ * `user_id` filter is a second line of defence. Failures throw: a page that can't
+ * load its data should say so, not render as if the user had none.
+ */
+
+async function signedIn(returnTo: string) {
+  const user = await requireUser(returnTo);
+  const supabase = await createClient();
+  if (!supabase) throw new Error("Supabase isn't configured");
+  return { user, supabase };
+}
+
+function check<T>(result: { data: T | null; error: { message: string } | null }, what: string): T {
+  if (result.error || result.data === null) {
+    throw new Error(`Couldn't load ${what}: ${result.error?.message ?? "no data returned"}`);
+  }
+  return result.data;
+}
+
+export interface ConsentState {
+  granted: boolean;
+  /** When the current state was recorded, or null if the user has never answered. */
+  at: string | null;
+}
+
+export async function loadConsent(returnTo: string): Promise<ConsentState> {
+  const { user, supabase } = await signedIn(returnTo);
+  const rows = check(
+    await supabase
+      .from("consents")
+      .select("action, created_at")
+      .eq("user_id", user.id)
+      .eq("scope", "data")
+      .order("id", { ascending: false })
+      .limit(1),
+    "consent",
+  );
+  return { granted: rows[0]?.action === "granted", at: rows[0]?.created_at ?? null };
+}
+
+export async function loadPassport(returnTo: string) {
+  const { user, supabase } = await signedIn(returnTo);
+  const [consent, measurements, references, preferences] = await Promise.all([
+    loadConsent(returnTo),
+    supabase
+      .from("body_measurements")
+      .select("name, value_cm, range_cm, confidence, source, updated_at")
+      .eq("user_id", user.id),
+    supabase.from("reference_garments").select("*").eq("user_id", user.id).order("created_at"),
+    supabase.from("fit_preferences").select("category, text").eq("user_id", user.id),
+  ]);
+  const measurementRows = check(measurements, "body measurements");
+  const referenceRows = check(references, "reference garments");
+  return {
+    email: user.email ?? null,
+    consent,
+    measurements: measurementRows,
+    references: referenceRows,
+    preferences: check(preferences, "fit preferences"),
+    status: passportStatus(
+      measurementRows.map((m) => m.name),
+      referenceRows.map((r) => r.category),
+    ),
+  };
+}
+
+/** One of the user's reference garments, or null if it doesn't exist or isn't theirs. */
+export async function loadReference(id: string, returnTo: string) {
+  const { user, supabase } = await signedIn(returnTo);
+  if (!isUuid(id)) return null;
+  const rows = check(
+    await supabase.from("reference_garments").select("*").eq("id", id).eq("user_id", user.id).limit(1),
+    "the garment",
+  );
+  return rows[0] ?? null;
+}
