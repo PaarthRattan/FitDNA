@@ -20,9 +20,11 @@ Visual language is the Dell '96 catalog system: black page frame, ribbon cards, 
 ```bash
 cd apps/web
 npm install
+cp .env.example .env.local   # optional: add Supabase keys to enable sign-in
 npm run dev      # http://localhost:3000
+npm test         # fit engine + database (RLS) tests
 npm run build && npm run start
 npm run lint
 ```
 
-All data is currently static mock data in `apps/web/src/lib/data.ts`. Swap it for the Fit Passport / fit-engine API when the backend lands (see the roadmap in the design project).
+Without Supabase settings the app runs signed out on the demo data in `apps/web/src/lib/data.ts`. Pages move to the database as the milestones in `design/ROADMAP.md` land; the fit engine (`apps/web/src/lib/fit/`) is already real.

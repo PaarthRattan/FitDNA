@@ -123,13 +123,23 @@ type ButtonProps = {
   className?: string;
   type?: "button" | "submit";
   onClick?: () => void;
+  disabled?: boolean;
 };
 
 /** Square button. Renders a Link when href is given. */
-export function Button({ children, variant = "primary", size = "md", href, className, type = "button", onClick }: ButtonProps) {
+export function Button({
+  children,
+  variant = "primary",
+  size = "md",
+  href,
+  className,
+  type = "button",
+  onClick,
+  disabled,
+}: ButtonProps) {
   const classes = cx(
     "inline-flex items-center justify-center border border-ink font-ui font-bold uppercase text-center leading-none cursor-pointer",
-    "hover:bg-primary hover:text-canvas hover:border-ink transition-none",
+    "hover:bg-primary hover:text-canvas hover:border-ink transition-none disabled:opacity-60 disabled:cursor-wait",
     size === "md" ? "text-xs px-4 py-2" : "text-[11px] px-2.5 py-1.5",
     variant === "primary" ? "bg-ink text-canvas" : "bg-canvas text-ink",
     className,
@@ -142,7 +152,7 @@ export function Button({ children, variant = "primary", size = "md", href, class
     );
   }
   return (
-    <button type={type} className={classes} onClick={onClick}>
+    <button type={type} className={classes} onClick={onClick} disabled={disabled}>
       {children}
     </button>
   );
@@ -197,6 +207,11 @@ export function CtaBlock({ children, className }: { children: ReactNode; classNa
     </div>
   );
 }
+
+/* Form chrome: 1px border, square corners, Times body text (spec: text-input). */
+export const INPUT =
+  "border border-ink px-2.5 py-[7px] font-body text-sm text-ink bg-canvas outline-none focus:bg-sticker/30";
+export const LABEL = "font-ui font-bold text-[11px] uppercase";
 
 /* Table chrome */
 export const TH = "px-3 py-1.5 text-left font-ui font-bold text-[11px] border-b border-ink whitespace-nowrap";

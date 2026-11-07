@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { Button } from "@/components/ui";
+import { Button, INPUT } from "@/components/ui";
 
 export function SearchBar({ query, fitsOnly }: { query: string; fitsOnly: boolean }) {
   const router = useRouter();
@@ -33,7 +33,7 @@ export function SearchBar({ query, fitsOnly }: { query: string; fitsOnly: boolea
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="Describe the garment, brand and size"
-        className="flex-1 min-w-[200px] border border-ink px-2.5 py-[7px] font-body text-sm text-ink bg-canvas outline-none focus:bg-sticker/30"
+        className={`flex-1 min-w-[200px] ${INPUT}`}
       />
       <Button type="submit">Search</Button>
       <Link

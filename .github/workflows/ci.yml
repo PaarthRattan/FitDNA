@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - run: npm ci
+      # Route types (LayoutProps etc.) are generated, not committed.
+      - run: npx next typegen
+      - run: npm run lint
+      - run: npx tsc --noEmit
+      # Includes the database tests: migrations + row-level security on PGlite.
+      - run: npm test
+      # Built with no Supabase settings on purpose: nothing may need them at build time.
+      - run: npm run build
