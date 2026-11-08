@@ -67,8 +67,11 @@ export function basisNote(effective: EffectiveListing): string {
   const sources = new Set(Object.values(effective.details).map((d) => d.source));
   if (sources.size === 0) return "";
   if (sources.size === 1 && sources.has("user")) return "Based on the measurements you entered.";
-  if (sources.has("user")) return "Based on the seller's measurements, with your corrections.";
-  return "Based on the seller's measurements.";
+  const base =
+    sources.has("ai_text") || sources.has("ai_photo")
+      ? "Based on the listing's measurements, some read by AI"
+      : "Based on the seller's measurements";
+  return sources.has("user") ? `${base}, with your corrections.` : `${base}.`;
 }
 
 /** Chips for a listing card: size, condition, where the measurements came from. */

@@ -151,12 +151,16 @@ const TYPICAL: Record<FitPart, { min: number; max: number }> = {
 };
 
 /** A flat chest above this, or a circumference below the next, isn't plausible for an adult top. */
-const FLAT_CHEST_MAX = 75;
-const ROUND_CHEST_MIN = 80;
+export const FLAT_CHEST_MAX = 75;
+export const ROUND_CHEST_MIN = 80;
 
 const DOC_UNIT = /\bmeasure(?:ments?|d)?\b[^.\n]{0,25}?(?:\bin\b|\()\s*(inches|inch|in\b|cm|centimet(?:er|re)s?)/i;
-/** "Fits chest 40", "model's chest": about a person, not the garment. Stops at a sentence or clause break. */
-const ABOUT_A_PERSON = /\b(?:fits?|to\s+fit|model'?s?|wearer|worn\s+by)\b[^.,;\n]*$/i;
+/**
+ * "Fits chest 40", "model's chest", "I'm 5'10, 170 lbs with a 38 inch chest": about a
+ * person, not the garment. Stops at a sentence or clause break, except that a height
+ * or weight earlier in the sentence still counts.
+ */
+const ABOUT_A_PERSON = /\b(?:fits?|to\s+fit|model'?s?|wearer|worn\s+by)\b[^.,;\n]*$|\b(?:i'?m|i\s+am|lbs|kg|pounds|tall|weigh\w*)\b[^.\n]*$/i;
 /** A "range" whose ends differ more than this is two different numbers, not a range. */
 const MAX_RANGE_SPREAD = 0.15;
 /** The same value again in the other unit: "22\" (56 cm)", "28\"/71cm", or on the next line. */
@@ -316,7 +320,10 @@ function toMeasurement(r: Reading, docFlat: boolean): ExtractedMeasurement | nul
 }
 
 /** Chest as a circumference, so a flat and a round reading of the same garment compare equal. */
-const comparable = (m: ExtractedMeasurement) => (m.basis === "flat" ? m.cm * 2 : m.cm);
+export const comparable = (m: ExtractedMeasurement) => (m.basis === "flat" ? m.cm * 2 : m.cm);
+
+/** How far apart (cm, chest as a circumference) two readings of one part may be and still agree. */
+export const AGREE_CM: Record<FitPart, number> = { chest: 2, shoulder: 1, length: 1, sleeve: 1 };
 
 export function extractMeasurements(markdown: string): Pick<ListingExtraction, "measurements" | "conflicting"> {
   const text = normalise(markdown);
@@ -335,8 +342,7 @@ export function extractMeasurements(markdown: string): Pick<ListingExtraction, "
   const conflicting: FitPart[] = [];
   for (const [part, values] of byPart) {
     const first = values[0];
-    const tolerance = part === "chest" ? 2 : 1;
-    if (values.some((v) => Math.abs(comparable(v) - comparable(first)) > tolerance)) conflicting.push(part);
+    if (values.some((v) => Math.abs(comparable(v) - comparable(first)) > AGREE_CM[part])) conflicting.push(part);
     // They agree: keep the reading that needed the fewest assumptions.
     else measurements[part] = values.reduce((best, v) => (v.assumed.length < best.assumed.length ? v : best));
   }

@@ -145,6 +145,8 @@ describe("extractMeasurements: what it refuses to read", () => {
 
   it("ignores the model's or the wearer's body", () => {
     expect(cm(`Model's chest: 38"\nModel is 6ft and fits chest 40`)).toEqual({});
+    expect(cm("I'm 5'10, 170 lbs with a 38 inch chest, and this fits me slightly loose.")).toEqual({});
+    expect(cm("I'm 5'10. Pit to pit 22 in")).toEqual({ chest: 55.9 });
   });
 
   it("ignores eBay's 'Chest Size', which is the wearer's size", () => {

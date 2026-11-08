@@ -6,7 +6,7 @@ import { requireUser } from "@/lib/db/auth";
 import { loadListing } from "@/lib/db/listings";
 import type { Assumption } from "@/lib/listings/extract-measurements";
 import { formInitial, type PartDetail } from "@/lib/listings/fit";
-import { SOURCE_LABELS, formatPrice } from "@/lib/listings/labels";
+import { formatPrice } from "@/lib/listings/labels";
 import { importMessage } from "@/lib/listings/status";
 import { marketplaceLabel } from "@/lib/listings/url";
 import { ListingForm } from "./listing-form";
@@ -24,13 +24,22 @@ const ASSUMED: Record<Assumption, string> = {
   range: "the seller gave a range; this is the middle",
 };
 
-/** "From the seller: “Pit to pit 22"”. We guessed the unit, so check it." */
+const FROM: Record<Exclude<PartDetail["source"], "user">, string> = {
+  seller: "From the seller",
+  size_chart: "From the size chart",
+  ai_text: "Read by AI from the listing",
+  ai_photo: "Read by AI from a photo",
+  estimated: "Typical for the size",
+};
+
+/** "From the seller: “Pit to pit 22"”. Check it: we guessed the unit." */
 function hintFor(detail: PartDetail | undefined): string | undefined {
   if (!detail) return undefined;
   if (detail.source === "user") return "Your correction.";
-  const from = detail.span ? `From ${SOURCE_LABELS[detail.source]}: “${detail.span}”.` : `From ${SOURCE_LABELS[detail.source]}.`;
-  const assumed = detail.assumed.map((a) => ASSUMED[a]);
-  return assumed.length ? `${from} Check it: ${assumed.join(", and ")}.` : from;
+  const from = detail.span ? `${FROM[detail.source]}: “${detail.span}”.` : `${FROM[detail.source]}.`;
+  const checks = detail.assumed.map((a) => ASSUMED[a]);
+  if (detail.source === "ai_text" || detail.source === "ai_photo") checks.unshift("AI can misread");
+  return checks.length ? `${from} Check it: ${checks.join(", and ")}.` : from;
 }
 
 export default async function EditListingPage({ params, searchParams }: { params: Params; searchParams: SearchParams }) {

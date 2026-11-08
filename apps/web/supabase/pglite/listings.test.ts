@@ -221,6 +221,32 @@ describe("deletion", () => {
   });
 });
 
+describe("ai_runs", () => {
+  it("is closed to every user: no reading, no writing", async () => {
+    await db.query(
+      "insert into ai_runs (task, model, prompt_version, input_hash, status, output) values ('listing_text', 'm', 'v1', $1, 'ok', '{}')",
+      ["a".repeat(64)],
+    );
+    for (const user of [ALICE, null]) {
+      expect(await count(user, "ai_runs")).toBe(0);
+      await expect(
+        as(db, user, () =>
+          db.query("insert into ai_runs (task, model, prompt_version, input_hash, status) values ('t', 'm', 'v', $1, 'ok')", ["b".repeat(64)]),
+        ),
+      ).rejects.toThrow(/row-level security/);
+      const remove = await as(db, user, () => db.query("delete from ai_runs"));
+      expect(remove.affectedRows).toBe(0);
+    }
+  });
+
+  it("logs one run per task, model, prompt version and input", async () => {
+    const insert = () =>
+      db.query("insert into ai_runs (task, model, prompt_version, input_hash, status) values ('t', 'm', 'v', $1, 'ok')", ["c".repeat(64)]);
+    await insert();
+    await expect(insert()).rejects.toThrow(/duplicate key/);
+  });
+});
+
 describe("seed.sql", () => {
   it("applies after the migrations, twice, and its demo listings are public", async () => {
     const seed = readFileSync(new URL("../seed.sql", import.meta.url), "utf8");

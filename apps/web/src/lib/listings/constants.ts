@@ -18,5 +18,11 @@ export const SCRAPE_TIMEOUT_MS = 30_000;
  */
 export const IMPORT_STALE_SECONDS = 75;
 
+/**
+ * The AI read starts only if the import is this far in, so it ends (AI_TIMEOUT_MS
+ * later) before the page's 60 s `maxDuration`. Otherwise the regex reading stands.
+ */
+export const IMPORT_AI_START_BY_MS = 35_000;
+
 /** Page text beyond this is ignored: listing details are near the top. */
 export const MAX_PAGE_CHARS = 200_000;

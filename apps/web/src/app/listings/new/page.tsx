@@ -47,8 +47,10 @@ export default async function NewListingPage({ searchParams }: { searchParams: S
         </p>
         <ImportForm />
         <p className="text-xs text-[#333] leading-[1.4]">
-          We fetch the page with Firecrawl, our page-reading service. Only the link is sent, never anything about you,
-          and we keep the listing&apos;s details, not the page itself. Up to {IMPORT_DAILY_CAP} links a day.
+          We fetch the page with Firecrawl, our page-reading service, and keep the listing&apos;s details, not the page
+          itself. If our own rules can&apos;t find every measurement, the listing&apos;s text (with names and contact
+          details removed) is also read by DeepSeek&apos;s AI model. Neither ever receives anything about you. Up to{" "}
+          {IMPORT_DAILY_CAP} links a day.
         </p>
       </div>
     </Shell>

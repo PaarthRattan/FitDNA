@@ -39,6 +39,7 @@ describe("migrations", () => {
     );
     expect(rows).toEqual(
       [
+        "ai_runs",
         "body_measurements",
         "consents",
         "fit_preferences",

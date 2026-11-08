@@ -30,4 +30,4 @@ npm run build && npm run start
 npm run lint
 ```
 
-The fit engine, the Fit Passport (sign-in, consent, measurements, reference garments) and listing import are real. Reading listing pages needs a Firecrawl key (`FIRECRAWL_API_KEY`, `FIRECRAWL_ENABLED=true` in `.env.local`); without one, imported listings are filled in by hand. Locally, `npm run db:reset` loads four demo listings. Without Supabase settings, signed-in pages redirect to `/login`.
+The fit engine, the Fit Passport (sign-in, consent, measurements, reference garments) and listing import are real. Reading listing pages needs a Firecrawl key (`FIRECRAWL_API_KEY`, `FIRECRAWL_ENABLED=true` in `.env.local`); without one, imported listings are filled in by hand. Measurements the rules can't read are read by DeepSeek when `DEEPSEEK_API_KEY` and `AI_ENABLED=true` are set; `npm run eval` scores that reading. Locally, `npm run db:reset` loads four demo listings. Without Supabase settings, signed-in pages redirect to `/login`.

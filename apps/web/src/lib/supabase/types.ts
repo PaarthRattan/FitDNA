@@ -5,7 +5,21 @@ export type Database = {
   
   "public": {
           Tables: {
-            "body_measurements": {
+            "ai_runs": {
+                  Row: {
+                    "cached_tokens": number | null,"created_at": string,"error": string | null,"id": number,"input_hash": string,"input_tokens": number | null,"latency_ms": number | null,"model": string,"output": Json | null,"output_tokens": number | null,"prompt_version": string,"status": string,"task": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "cached_tokens"?: number | null,"created_at"?: string,"error"?: string | null,"id"?: never,"input_hash": string,"input_tokens"?: number | null,"latency_ms"?: number | null,"model": string,"output"?: Json | null,"output_tokens"?: number | null,"prompt_version": string,"status": string,"task": string
+                  }
+                  Update: {
+                    "cached_tokens"?: number | null,"created_at"?: string,"error"?: string | null,"id"?: never,"input_hash"?: string,"input_tokens"?: number | null,"latency_ms"?: number | null,"model"?: string,"output"?: Json | null,"output_tokens"?: number | null,"prompt_version"?: string,"status"?: string,"task"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"body_measurements": {
                   Row: {
                     "confidence": number,"created_at": string,"id": string,"name": string,"range_cm": number | null,"source": string,"updated_at": string,"user_id": string,"value_cm": number,"vendor_job_id": string | null
                   }
