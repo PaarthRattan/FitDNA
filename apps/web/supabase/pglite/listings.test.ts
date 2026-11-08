@@ -290,6 +290,42 @@ describe("ai_runs", () => {
   });
 });
 
+describe("retention (purge_expired)", () => {
+  it("deletes expired listings with their children, keeps purchase snapshots, fresh and demo listings", async () => {
+    const expired = await insertListing("https://www.grailed.com/listings/1");
+    const fresh = await insertListing("https://www.grailed.com/listings/2");
+    const neverFetched = await insertListing("https://www.grailed.com/listings/3");
+    const demo = await insertListing("https://demo.fitdna.invalid/1", true);
+    await db.query("update listings set retention_until = now() - interval '1 day' where id = any($1)", [[expired, demo]]);
+    await db.query("update listings set retention_until = now() + interval '30 days' where id = $1", [fresh]);
+    await db.query("update listings set created_at = now() - interval '91 days' where id = $1", [neverFetched]);
+    await addChildren(expired);
+    await importFor(ALICE, expired);
+    await db.query(
+      `insert into purchases (user_id, listing_id, marketplace, category, prediction, engine_version, inputs_hash)
+       values ($1, $2, 'grailed', 'knit', '{"overall":"ideal"}', '1', 'h')`,
+      [ALICE, expired],
+    );
+    await db.query("insert into ai_runs (task, model, prompt_version, input_hash, status, created_at) values ('t', 'm', 'v', $1, 'ok', now() - interval '91 days')", ["d".repeat(64)]);
+    await db.query("insert into ai_runs (task, model, prompt_version, input_hash, status) values ('t', 'm', 'v', $1, 'ok')", ["e".repeat(64)]);
+
+    const { rows } = await db.query("select * from purge_expired()");
+    expect(rows).toEqual([{ listings_deleted: 2, ai_runs_deleted: 1 }]);
+    const left = await db.query<{ id: string }>("select id from listings order by canonical_url");
+    expect(left.rows.map((r) => r.id).sort()).toEqual([fresh, demo].sort());
+    for (const table of ["listing_extractions", "price_observations", "listing_imports"]) {
+      expect((await db.query(`select * from ${table}`)).rows, table).toHaveLength(0);
+    }
+    expect((await db.query("select listing_id from purchases")).rows).toEqual([{ listing_id: null }]);
+  });
+
+  it("can't be run by API users", async () => {
+    for (const user of [ALICE, null]) {
+      await expect(as(db, user, () => db.query("select * from purge_expired()"))).rejects.toThrow(/permission denied/);
+    }
+  });
+});
+
 describe("seed.sql", () => {
   it("applies after the migrations, twice, and its demo listings are public", async () => {
     const seed = readFileSync(new URL("../seed.sql", import.meta.url), "utf8");

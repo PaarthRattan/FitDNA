@@ -237,6 +237,11 @@ isOneToOne: true
           Functions: {
             "has_current_consent":
 { Args: { "p_scope": string }; Returns: boolean
+                           },
+"purge_expired":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "ai_runs_deleted": number,"listings_deleted": number
+            }[]
                            }
           }
           Enums: {

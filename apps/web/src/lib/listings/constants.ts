@@ -6,7 +6,7 @@ export const IMPORT_DAILY_CAP = 20;
 /** A listing fetched more recently than this isn't fetched again. Matches Firecrawl's default `maxAge`. */
 export const LISTING_CACHE_HOURS = 48;
 
-/** How long an imported listing may be kept. Enforced by a scheduled job from M5. */
+/** How long an imported listing may be kept. Enforced nightly by `public.purge_expired()` (pg_cron); keep the two in step. */
 export const LISTING_RETENTION_DAYS = 90;
 
 /** Firecrawl's own page-load timeout. Kept well inside the import page's `maxDuration` (60 s). */
