@@ -180,6 +180,60 @@ describe("extractMeasurements: what it refuses to read", () => {
   });
 });
 
+describe("extractMeasurements: page layouts seen on real listings", () => {
+  // Shapes copied from real pages fetched through Firecrawl (Grailed, Poshmark, Depop), shortened.
+  it("reads Grailed's measurement block: one item per line, each in both units", () => {
+    const md = "Measurements\n\nMeasured with garment laid flat.\n\nChest\n\n20.5 in\n\n52.1 cm\n\nLength\n\n27 in\n\n68.6 cm\n\nShoulders\n\n19.5 in\n\n49.5 cm\n\nSleeve Length\n\n24 in\n\n61 cm";
+    const { measurements, conflicting } = extractMeasurements(md);
+    expect(conflicting).toEqual([]);
+    expect(measurements).toMatchObject({
+      chest: { cm: 52.1, basis: "flat", assumed: [] },
+      length: { cm: 68.6 },
+      shoulder: { cm: 49.5 },
+      sleeve: { cm: 61 },
+    });
+  });
+
+  it("never reads a value-first measurement across a line break", () => {
+    // "68.6 cm" ends one item and "Shoulders" starts the next; it isn't a shoulder of 68.6.
+    expect(cm("Length 27 in\n68.6 cm\nShoulders 19.5 in")).toEqual({ length: 68.6, shoulder: 49.5 });
+    expect(cm("Ptp 25 fo 27 inches\nfull length 25 to 26 inches")).toEqual({ chest: 63.5, length: 64.8 });
+  });
+
+  it("accepts a second unit on the next line only when it's the same value", () => {
+    expect(cm("Chest\n\n20.5 in\n\n60 cm")).toEqual({});
+  });
+
+  it("prefers the reading that needed fewer assumptions when two agree", () => {
+    const { measurements } = extractMeasurements("Chest: 52 cm\nPit to pit: 20.5in");
+    expect(measurements.chest).toMatchObject({ basis: "flat", assumed: [] });
+  });
+
+  it("ignores 'similar items' cards, which are links", () => {
+    const md = "[![Sweatshirt](https://img.test/1.jpg)\\\n\\\nSweatshirt - Size S, pit to pit 30 in\\\n$16.00](https://www.mercari.com/us/item/m1/)";
+    expect(cm(md)).toEqual({});
+    expect(extractSize(md)).toBeNull();
+  });
+});
+
+describe("extractListing: the description tag", () => {
+  it("reads measurements the page body lacks (Depop)", () => {
+    const listing = extractListing({
+      title: "1990’s Basic Editions Ringer tshirt",
+      markdown: "Size XXL\n\nGood condition",
+      description: "1990’s Basic Editions Ringer tshirt\nXL/XXL\n24” pit to pit \n27” collar to hem",
+    });
+    expect(listing.measurements).toMatchObject({ chest: { cm: 61, basis: "flat" }, length: { cm: 68.6 } });
+    expect(listing).toMatchObject({ category: "tee", sizeLabel: "XXL", condition: "good" });
+  });
+
+  it("never overrides or contradicts the page's own numbers", () => {
+    const listing = extractListing({ title: "tee", markdown: `Pit to pit: 22.5"`, description: "Pit to pit 22" });
+    expect(listing.measurements.chest?.cm).toBe(57.2);
+    expect(listing.conflicting).toEqual([]);
+  });
+});
+
 describe("extractSize", () => {
   it("reads letter and number sizes", () => {
     expect(extractSize("Wool zip cardigan size 3")).toBe("3");
@@ -192,6 +246,12 @@ describe("extractSize", () => {
   it("prefers the title, then the page", () => {
     expect(extractSize("Vintage tee size L", "Size: M")).toBe("L");
     expect(extractSize("Vintage tee", "Size: M")).toBe("M");
+  });
+
+  it("reads region prefixes and Grailed's header, earliest first", () => {
+    expect(extractSize("Size\n\nUS M / EU 48-50")).toBe("M");
+    expect(extractSize("Men's US M / EU 48-50 / 2•Gently Used\n\nSize 4 - fits a medium well")).toBe("M");
+    expect(extractSize("Size\n\n\n\nM (8-10)")).toBe("M");
   });
 
   it("doesn't read a measurement or 'size chart' as a size", () => {
@@ -212,6 +272,13 @@ describe("extractCondition", () => {
   it("reads NWT and NWOT", () => {
     expect(extractCondition("Wool sweater NWT")).toBe("new");
     expect(extractCondition("NWOT, never worn")).toBe("like_new");
+  });
+
+  it("reads unlabelled phrases sites use", () => {
+    expect(extractCondition("Men's US M•Gently Used")).toBe("good");
+    expect(extractCondition("Size XXL\n\nGood condition")).toBe("good");
+    expect(extractCondition("Size XXL", "Sweater cardigan, from a 5-star seller. Excellent condition.")).toBe("excellent");
+    expect(extractCondition("Condition\nLike new")).toBe("like_new");
   });
 
   it("ignores condition words without a label", () => {

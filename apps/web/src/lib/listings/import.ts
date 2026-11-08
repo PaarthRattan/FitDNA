@@ -63,7 +63,7 @@ async function importListing(admin: Admin, importId: string) {
 
   const facts = readPageFacts(page.metadata, page.images);
   const title = facts.title ?? listing.title;
-  const extraction = extractListing({ title, markdown: page.markdown });
+  const extraction = extractListing({ title, markdown: page.markdown, description: facts.description });
   const hash = sha256(page.markdown);
   const now = new Date();
 
@@ -74,7 +74,7 @@ async function importListing(admin: Admin, importId: string) {
       price: facts.price,
       currency: facts.currency,
       size_label: extraction.sizeLabel,
-      condition: extraction.condition,
+      condition: extraction.condition ?? facts.condition,
       image_urls: facts.imageUrls,
       content_hash: hash,
       fetched_at: now.toISOString(),

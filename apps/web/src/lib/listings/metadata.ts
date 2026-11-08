@@ -5,12 +5,28 @@
  * anything unrecognised is left out.
  */
 
+import type { Condition } from "@/lib/fit/score";
+
 export interface PageFacts {
   title: string | null;
   price: number | null;
   currency: string | null;
   imageUrls: string[];
+  /** The description meta tag. Some sites (Depop) put the seller's text only here. */
+  description: string | null;
+  /** From a `product:condition` tag, when the page has one. */
+  condition: Condition | null;
 }
+
+const DESCRIPTION_MAX = 5000;
+
+/** `product:condition` values (Open Graph / schema.org style) to ours. "used" says little, so it's the middle. */
+const META_CONDITIONS: Record<string, Condition> = {
+  new: "new",
+  newcondition: "new",
+  used: "good",
+  usedcondition: "good",
+};
 
 const TITLE_MAX = 200;
 const MAX_IMAGES = 8;
@@ -36,9 +52,11 @@ function pick(meta: Record<string, unknown>, keys: string[]): string | null {
   return null;
 }
 
+/** The title's first line, without the site's name. Depop's titles run on into the description. */
 export function cleanTitle(raw: string | null): string | null {
   if (!raw) return null;
-  const title = raw.replace(EBAY_SUFFIX, "").replace(SITE_SUFFIX, "").replace(/\s+/g, " ").trim();
+  const firstLine = raw.split(/\n/).find((line) => line.trim()) ?? "";
+  const title = firstLine.replace(EBAY_SUFFIX, "").replace(SITE_SUFFIX, "").replace(/\s+/g, " ").trim();
   return title ? title.slice(0, TITLE_MAX) : null;
 }
 
@@ -72,10 +90,13 @@ export function readPageFacts(metadata: Record<string, unknown>, images: unknown
   const ogImage = metadata.ogImage ?? metadata["og:image"];
   // A price without a currency can't be shown or compared, so both or neither are kept.
   const priced = price !== null && currency !== null;
+  const metaCondition = pick(metadata, ["product:condition", "og:condition"])?.toLowerCase().replace(/[^a-z]/g, "") ?? "";
   return {
     title: cleanTitle(pick(metadata, ["ogTitle", "og:title", "title"])),
     price: priced ? price : null,
     currency: priced ? currency : null,
+    description: pick(metadata, ["description", "ogDescription", "og:description"])?.slice(0, DESCRIPTION_MAX) ?? null,
+    condition: META_CONDITIONS[metaCondition] ?? null,
     imageUrls: httpsUrls([...(Array.isArray(ogImage) ? ogImage : [ogImage]), ...(Array.isArray(images) ? images : [])]),
   };
 }

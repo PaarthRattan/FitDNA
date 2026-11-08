@@ -12,7 +12,7 @@ import { MAX_PAGE_CHARS } from "./constants";
  */
 
 /** Bump whenever a pattern or rule here changes, so listings are re-read on their next fetch. */
-export const EXTRACTOR_VERSION = "regex-1";
+export const EXTRACTOR_VERSION = "regex-2";
 
 export type Unit = "cm" | "in";
 
@@ -52,7 +52,9 @@ function normalise(text: string): string {
   return text
     .slice(0, MAX_PAGE_CHARS)
     .replace(/!\[[^\]]*\]\([^)]*\)/g, " ") // markdown images
-    .replace(/\]\([^)]*\)/g, "]") // link targets, which can contain numbers
+    // Links, text and all: "similar items" cards, breadcrumbs and help links are
+    // never the seller's description, and their targets can contain numbers.
+    .replace(/\[[^\]]*\]\([^)]*\)/g, " ")
     .replace(/[   \t]/g, " ")
     .replace(/[″“”]/g, '"')
     .replace(/[′‘’]/g, "'")
@@ -127,7 +129,8 @@ const PATTERNS: Pattern[] = LABELS.flatMap(({ part, basis, label }, priority) =>
     basis,
     priority: priority + LABELS.length,
     valueFirst: true,
-    re: new RegExp(String.raw`(?<![\d.,])${NUM}${UNIT}[\s:=~-]{0,3}(?:of\s+|across\s+(?:the\s+)?)?\b(?:${label})${END}`, "gi"),
+    // Same line only: "68.6 cm⏎Shoulders" is the end of one item and the start of the next.
+    re: new RegExp(String.raw`(?<![\d.,])${NUM}${UNIT}[ \t:=~-]{0,3}(?:of[ \t]+|across[ \t]+(?:the[ \t]+)?)?\b(?:${label})${END}`, "gi"),
   },
 ]);
 
@@ -156,9 +159,24 @@ const DOC_UNIT = /\bmeasure(?:ments?|d)?\b[^.\n]{0,25}?(?:\bin\b|\()\s*(inches|i
 const ABOUT_A_PERSON = /\b(?:fits?|to\s+fit|model'?s?|wearer|worn\s+by)\b[^.,;\n]*$/i;
 /** A "range" whose ends differ more than this is two different numbers, not a range. */
 const MAX_RANGE_SPREAD = 0.15;
-const DUAL_UNIT = /^\s*[/(]\s*\d{1,3}(?:[.,]\d{1,2})?\s*(?:cm|centimet|inch|in\b|")/i;
+/** The same value again in the other unit: "22\" (56 cm)", "28\"/71cm", or on the next line. */
+const NEXT_VALUE = /^\s*[/(]?\s*(\d{1,3}(?:[.,]\d{1,2})?)\s*(cm|centimet(?:er|re)s?|inch(?:es)?|in(?![a-z])|")/i;
+/** "Measured with garment laid flat": a plain "Chest" on this page is flat. */
+const DOC_FLAT = /\b(?:laid|lying|laying|measured|measurements?\s+taken)\s+(?:\w+\s+){0,3}flat\b|\bflat[\s-]+lay\b/i;
 /** Another number straight after the value: a size-chart row such as "Chest 50 52 54". */
 const TABLE_ROW = /^\s*(?:[:,/]\s*)?\d/;
+
+/** True when `after` starts with this reading's value in the other unit, e.g. "20.5 in" then "52.1 cm". */
+function isSameInOtherUnit(g: Record<string, string | undefined>, after: string): boolean {
+  const unit = toUnit(g.unit);
+  const next = after.match(NEXT_VALUE);
+  const nextUnit = toUnit(next?.[2]);
+  if (!unit || !next || !nextUnit || nextUnit === unit || g.range) return false;
+  const toCmValue = (v: number, u: Unit) => (u === "in" ? v * CM_PER_INCH : v);
+  const a = toCmValue(parseNumber(g.num!, g.frac, g.glyph), unit);
+  const b = toCmValue(parseNumber(next[1]), nextUnit);
+  return Math.abs(a - b) <= Math.max(0.6, 0.02 * a);
+}
 
 function toUnit(raw: string | undefined): Unit | null {
   if (!raw) return null;
@@ -200,7 +218,7 @@ function findReadings(text: string): Reading[] {
       const end = start + m[0].length;
       const after = text.slice(end, end + 24);
       if (ABOUT_A_PERSON.test(lineBefore(text, start))) continue;
-      if (!pattern.valueFirst && !DUAL_UNIT.test(after) && (TABLE_ROW.test(after) || /^\s*%/.test(after))) continue;
+      if (!pattern.valueFirst && !isSameInOtherUnit(g, after) && (TABLE_ROW.test(after) || /^\s*%/.test(after))) continue;
 
       const assumed: Assumption[] = [];
       let value = parseNumber(g.num, g.frac, g.glyph);
@@ -276,12 +294,12 @@ function resolveUnits(readings: Reading[], docUnit: Unit | null): void {
   }
 }
 
-function toMeasurement(r: Reading): ExtractedMeasurement | null {
+function toMeasurement(r: Reading, docFlat: boolean): ExtractedMeasurement | null {
   if (!r.unit) return null;
   const cm = round1(r.unit === "in" ? r.value * CM_PER_INCH : r.value);
   const m: ExtractedMeasurement = { cm, unit: r.unit, span: r.span, assumed: [...r.assumed] };
   if (r.part === "chest") {
-    let basis = r.basis ?? r.basisHint;
+    let basis = r.basis ?? r.basisHint ?? (docFlat && cm <= FLAT_CHEST_MAX ? "flat" : null);
     if (!basis) {
       if (cm <= FLAT_CHEST_MAX) basis = "flat";
       else if (cm >= ROUND_CHEST_MIN) basis = "circumference";
@@ -303,12 +321,13 @@ const comparable = (m: ExtractedMeasurement) => (m.basis === "flat" ? m.cm * 2 :
 export function extractMeasurements(markdown: string): Pick<ListingExtraction, "measurements" | "conflicting"> {
   const text = normalise(markdown);
   const docUnit = toUnit(text.match(DOC_UNIT)?.[1]);
+  const docFlat = DOC_FLAT.test(text);
   const readings = findReadings(text);
   resolveUnits(readings, docUnit);
 
   const byPart = new Map<FitPart, ExtractedMeasurement[]>();
   for (const r of readings) {
-    const m = toMeasurement(r);
+    const m = toMeasurement(r, docFlat);
     if (m) byPart.set(r.part, [...(byPart.get(r.part) ?? []), m]);
   }
 
@@ -318,7 +337,8 @@ export function extractMeasurements(markdown: string): Pick<ListingExtraction, "
     const first = values[0];
     const tolerance = part === "chest" ? 2 : 1;
     if (values.some((v) => Math.abs(comparable(v) - comparable(first)) > tolerance)) conflicting.push(part);
-    else measurements[part] = first;
+    // They agree: keep the reading that needed the fewest assumptions.
+    else measurements[part] = values.reduce((best, v) => (v.assumed.length < best.assumed.length ? v : best));
   }
   return { measurements, conflicting };
 }
@@ -337,16 +357,27 @@ const SIZE_WORDS: Record<string, string> = {
   "extra-large": "XL",
 };
 
-const SIZE = /\b(?:tagged\s+)?size\s*(?:tag(?:ged)?\s*)?(?:[:=-]|\bis\b)?\s*((?:xxs|xs|s|m|l|xl|xxl|xxxl|[2-5]xl)(?![a-z])|small|medium|large|x-?large|extra[\s-]large|\d{1,2}(?:\.5)?(?![\d.,]|\s*(?:cm|in\b|"|%)))/i;
-const TAGGED = /\btagged\s+((?:xxs|xs|s|m|l|xl|xxl|xxxl|[2-5]xl)(?![a-z]))/i;
+const LETTER = String.raw`(?:xxs|xs|s|m|l|xl|xxl|xxxl|[2-5]xl)(?![a-z])`;
+const REGION = String.raw`(?:(?:us|uk|eu|it|jp)\s+)?`;
+const SIZE_PATTERNS = [
+  new RegExp(
+    String.raw`\b(?:tagged\s+)?size\s*(?:tag(?:ged)?\s*)?(?:[:=-]|\bis\b)?\s*${REGION}(${LETTER}|small|medium|large|x-?large|extra[\s-]large|\d{1,2}(?:\.5)?(?![\d.,]|\s*(?:cm|in\b|"|%)))`,
+    "i",
+  ),
+  new RegExp(String.raw`\btagged\s+(${LETTER})`, "i"),
+  // Grailed's header: "Men's US M / EU 48-50 / 2".
+  new RegExp(String.raw`\b(?:men|women)'?s\s+${REGION}(${LETTER})`, "i"),
+];
 
+/** The size label: from the first text that has one, at its earliest mention. */
 export function extractSize(...texts: string[]): string | null {
   for (const t of texts) {
-    const m = normalise(t).match(SIZE) ?? normalise(t).match(TAGGED);
-    if (m) {
-      const raw = m[1].toLowerCase().replace(/\s+/g, " ");
-      return SIZE_WORDS[raw] ?? raw.toUpperCase();
-    }
+    const text = normalise(t);
+    const matches = SIZE_PATTERNS.map((re) => text.match(re)).filter((m): m is RegExpMatchArray => m !== null);
+    if (matches.length === 0) continue;
+    const first = matches.reduce((a, b) => (b.index! < a.index! ? b : a));
+    const raw = first[1].toLowerCase().replace(/\s+/g, " ");
+    return SIZE_WORDS[raw] ?? raw.toUpperCase();
   }
   return null;
 }
@@ -363,15 +394,42 @@ const CONDITION_WORDS: ReadonlyArray<[RegExp, Condition]> = [
   [/\bused\b|\bpre-?owned\b/i, "good"],
 ];
 
-/** Condition from a "Condition:" label, or the NWT / NWOT shorthands anywhere. */
-export function extractCondition(markdown: string): Condition | null {
-  const text = normalise(markdown);
-  const labelled = text.match(/\bcondition\b\s*(?:[:=-]|\bis\b)\s*([^\n]{0,40})/i)?.[1];
-  if (labelled) {
+/** Phrases specific enough to trust without a "Condition:" label. */
+const CONDITION_PHRASES: ReadonlyArray<[RegExp, Condition]> = [
+  [/\bnew\s+with\s+tags\b|\bbrand\s+new\b/i, "new"],
+  [/\bnew\s+without\s+tags\b|\blike\s+new\b/i, "like_new"],
+  [/\bgently\s+used\b/i, "good"],
+];
+
+const CONDITION_BEFORE_WORD: Record<string, Condition> = {
+  excellent: "excellent",
+  great: "excellent",
+  "very good": "excellent",
+  good: "good",
+  fair: "fair",
+  poor: "poor",
+};
+
+/**
+ * Condition from, in order: a "Condition:" label (or "Condition" on its own line),
+ * NWT / NWOT, a distinctive phrase such as "gently used", or "<word> condition".
+ */
+export function extractCondition(...texts: string[]): Condition | null {
+  const all = texts.map(normalise);
+  for (const text of all) {
+    const labelled = text.match(/\bcondition\b(?:\s*[:=-]|\s+is\b|[ \t]*\n)\s*([^\n]{1,40})/i)?.[1];
+    if (!labelled) continue;
     for (const [re, condition] of CONDITION_WORDS) if (re.test(labelled)) return condition;
   }
-  if (/\bNWT\b/.test(text)) return "new";
-  if (/\bNWOT\b/.test(text)) return "like_new";
+  for (const text of all) {
+    if (/\bNWT\b/.test(text)) return "new";
+    if (/\bNWOT\b/.test(text)) return "like_new";
+  }
+  for (const text of all) {
+    for (const [re, condition] of CONDITION_PHRASES) if (re.test(text)) return condition;
+    const before = text.match(/\b(excellent|great|very\s+good|good|fair|poor)\s+(?:used\s+)?condition\b/i)?.[1];
+    if (before) return CONDITION_BEFORE_WORD[before.toLowerCase().replace(/\s+/g, " ")];
+  }
   return null;
 }
 
@@ -392,13 +450,35 @@ export function guessCategory(title: string | null): ListingCategory | null {
   return OUT_OF_SCOPE.test(title) ? "out_of_scope" : null;
 }
 
-/** Everything the regex pass can read from a listing. */
-export function extractListing({ title, markdown }: { title: string | null; markdown: string }): ListingExtraction {
+/**
+ * Everything the regex pass can read from a listing. `description` is the page's
+ * description meta tag: some sites (Depop) put the seller's text only there. It only
+ * fills in parts the page itself doesn't give, so a truncated copy can't override
+ * or conflict with the full text.
+ */
+export function extractListing({
+  title,
+  markdown,
+  description = null,
+}: {
+  title: string | null;
+  markdown: string;
+  description?: string | null;
+}): ListingExtraction {
+  const fromPage = extractMeasurements(markdown);
+  const measurements = { ...fromPage.measurements };
+  if (description) {
+    const fromDescription = extractMeasurements(description).measurements;
+    for (const [part, m] of Object.entries(fromDescription) as Array<[FitPart, ExtractedMeasurement]>) {
+      if (!measurements[part] && !fromPage.conflicting.includes(part)) measurements[part] = m;
+    }
+  }
   return {
-    ...extractMeasurements(markdown),
+    measurements,
+    conflicting: fromPage.conflicting,
     category: guessCategory(title),
-    sizeLabel: extractSize(title ?? "", markdown),
-    condition: extractCondition(markdown),
+    sizeLabel: extractSize(title ?? "", markdown, description ?? ""),
+    condition: extractCondition(markdown, description ?? ""),
   };
 }
 

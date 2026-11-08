@@ -83,6 +83,8 @@ describe("readPageFacts", () => {
       price: 185,
       currency: "USD",
       imageUrls: ["https://media.test/a.jpg", "https://media.test/b.jpg"],
+      description: null,
+      condition: null,
     });
   });
 
@@ -96,7 +98,22 @@ describe("readPageFacts", () => {
       price: null,
       currency: null,
       imageUrls: [],
+      description: null,
+      condition: null,
     });
+  });
+
+  it("keeps the description tag and reads a product condition tag (Poshmark)", () => {
+    expect(readPageFacts({ description: "24” pit to pit", "product:condition": "used" }, [])).toMatchObject({
+      description: "24” pit to pit",
+      condition: "good",
+    });
+    expect(readPageFacts({ "product:condition": "new" }, []).condition).toBe("new");
+    expect(readPageFacts({ "product:condition": "refurbished" }, []).condition).toBeNull();
+  });
+
+  it("keeps only the first line of a title that runs into the description (Depop)", () => {
+    expect(cleanTitle("1990’s Ringer tshirt\nsingle stitch\nMade in USA... | Depop")).toBe("1990’s Ringer tshirt");
   });
 
   it("parses prices and cleans titles", () => {
