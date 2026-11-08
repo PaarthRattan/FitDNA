@@ -87,6 +87,12 @@ describe("validateListingText", () => {
     expect(r.rejected[0]).toMatch(/number not in the quote/);
   });
 
+  it("counts curly-quote inches as a stated unit (Depop writes 24”)", () => {
+    const text = "24” pit to pit \n27” collar to hem";
+    const r = validateListingText({ measurements: [m({ value: 24, span: "24” pit to pit" })] }, text);
+    expect(r.measurements.chest).toMatchObject({ cm: 61, assumed: [] });
+  });
+
   it("drops a unit that contradicts the quote", () => {
     const r = validateListingText({ measurements: [m({ unit: "cm" })] }, TEXT);
     expect(r.rejected[0]).toMatch(/unit contradicts/);

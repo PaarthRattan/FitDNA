@@ -148,7 +148,7 @@ function numbersIn(span: string): number[] {
 }
 
 const MENTIONS_CM = /\d\s*(?:cm|centimet)/i;
-const MENTIONS_IN = /\d\s*(?:in(?![a-z])|inch|"|″|'')/i;
+const MENTIONS_IN = /\d\s*(?:in(?![a-z])|inch|["″”“]|'')/i;
 
 function readMeasurement(raw: unknown, text: string, rejected: string[]): [FitPart, ExtractedMeasurement] | null {
   if (!isObject(raw)) return null;
