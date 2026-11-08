@@ -9,9 +9,11 @@ import { CONFIRM_WORD } from "./constants";
 export type DeleteState = { error: string } | null;
 
 /**
- * Deletes the signed-in user's account. Every table cascades from the auth user, so
- * this removes their consents, measurements, reference garments and preferences in
- * one step. Needs the typed confirmation word; the user id comes only from the session.
+ * Deletes the signed-in user's account. Every user-owned table cascades from the auth
+ * user, so this removes their consents, measurements, reference garments, preferences,
+ * listing imports, corrections, saves and purchases in one step. Shared listing rows
+ * hold nothing about the user and stay. Needs the typed confirmation word; the user id
+ * comes only from the session.
  */
 export async function deleteMyData(_prev: DeleteState, formData: FormData): Promise<DeleteState> {
   const user = await getUser();

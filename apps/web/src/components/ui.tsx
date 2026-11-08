@@ -174,14 +174,18 @@ export function Photo({ label, className }: { label: string; className?: string 
   );
 }
 
-/** Red round award-seal used for the Purchase Confidence Score. */
-export function ConfidenceSeal({ score }: { score: number }) {
+/** Red round award-seal used for the Purchase Confidence Score. Grey with a dash when there's no score yet. */
+export function ConfidenceSeal({ score }: { score: number | null }) {
   return (
     <div
-      className="w-[74px] h-[74px] rounded-full bg-primary border-2 border-ink text-canvas flex flex-col items-center justify-center shadow-hard shrink-0"
-      aria-label={`Purchase confidence ${score} out of 100`}
+      role="img"
+      className={cx(
+        "w-[74px] h-[74px] rounded-full border-2 border-ink flex flex-col items-center justify-center shadow-hard shrink-0",
+        score === null ? "bg-tint-steel text-ink" : "bg-primary text-canvas",
+      )}
+      aria-label={score === null ? "No purchase confidence score yet" : `Purchase confidence ${score} out of 100`}
     >
-      <span className="font-display font-black text-2xl leading-none">{score}</span>
+      <span className="font-display font-black text-2xl leading-none">{score ?? "—"}</span>
       <span className="font-ui font-bold text-[8px] tracking-[.04em]">CONFIDENCE</span>
     </div>
   );

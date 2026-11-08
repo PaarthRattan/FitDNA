@@ -5,7 +5,11 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Button, INPUT } from "@/components/ui";
 
-export function SearchBar({ query, fitsOnly }: { query: string; fitsOnly: boolean }) {
+/**
+ * Filters the listings already on the page. Searching the marketplaces themselves
+ * comes with the eBay integration (M5); other sites are added by pasting a link.
+ */
+export function SearchBar({ query, fitsOnly, canImport }: { query: string; fitsOnly: boolean; canImport: boolean }) {
   const router = useRouter();
   const [value, setValue] = useState(query);
 
@@ -25,17 +29,17 @@ export function SearchBar({ query, fitsOnly }: { query: string; fitsOnly: boolea
   return (
     <form onSubmit={onSubmit} role="search" className="px-5 py-4 flex gap-2 border-b border-ink items-center flex-wrap">
       <label htmlFor="q" className="sr-only">
-        Search all markets
+        Filter your listings
       </label>
       <input
         id="q"
         name="q"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        placeholder="Describe the garment, brand and size"
+        placeholder="Filter by title, site or size"
         className={`flex-1 min-w-[200px] ${INPUT}`}
       />
-      <Button type="submit">Search</Button>
+      <Button type="submit">Filter</Button>
       <Link
         href={buildHref(value, !fitsOnly)}
         aria-pressed={fitsOnly}
@@ -43,8 +47,13 @@ export function SearchBar({ query, fitsOnly }: { query: string; fitsOnly: boolea
           fitsOnly ? "bg-sticker text-ink" : "bg-canvas text-ink"
         }`}
       >
-        Filters: fits me{fitsOnly ? " ✓" : ""}
+        Fits me{fitsOnly ? " ✓" : ""}
       </Link>
+      {canImport && (
+        <Button href="/listings/new" variant="secondary">
+          + Paste a link
+        </Button>
+      )}
     </form>
   );
 }

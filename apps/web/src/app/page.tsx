@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { FitZoneLegend, FooterNav, ScanSticker, SiteNav, TopBanner } from "@/components/chrome";
-import { Button, Card, CardSub, CardTitle, CardTitleBar, ChipRow, CtaBlock, Eyebrow, Sticker } from "@/components/ui";
+import { Button, Card, CardSub, CardTitle, CardTitleBar, ChipRow, CtaBlock, Eyebrow, Sticker, TD, TD_BOLD, TH } from "@/components/ui";
 import { SITE } from "@/lib/data";
+import { loadRecentPredictions, type ListingSummary } from "@/lib/db/listings";
 import { loadPassport } from "@/lib/db/passport";
 import { FIT_ZONES } from "@/lib/fit-zones";
+import { marketplaceLabel } from "@/lib/listings/url";
 import { asZone, categoryLabel, measurementChips, type ReferenceRow } from "@/lib/passport/mappers";
 
 export default async function WardrobePage() {
-  const { references, status } = await loadPassport("/");
+  const [{ references, status }, recent] = await Promise.all([loadPassport("/"), loadRecentPredictions()]);
 
   return (
     <>
@@ -55,9 +57,18 @@ export default async function WardrobePage() {
           <Eyebrow tint="sky" size="md">
             Recent predictions
           </Eyebrow>
-          <div className="border border-ink p-5 font-body text-sm">
-            No predictions yet. When you check a listing&apos;s fit, it shows up here with how it turned out.
-          </div>
+          {recent.length === 0 ? (
+            <div className="border border-ink p-5 font-body text-sm flex flex-col gap-3">
+              <p>No predictions yet. Save or buy a listing and it shows up here.</p>
+              <div>
+                <Button href="/listings/new" variant="secondary">
+                  Paste a link
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <RecentPredictions listings={recent} />
+          )}
         </main>
       </div>
 
@@ -93,5 +104,48 @@ function GarmentCard({ garment: g }: { garment: ReferenceRow }) {
         </Sticker>
       )}
     </Card>
+  );
+}
+
+/** Saved and bought listings with their current prediction. Real outcomes join this table with fit feedback (M7). */
+function RecentPredictions({ listings }: { listings: ListingSummary[] }) {
+  return (
+    <div className="border border-ink overflow-x-auto">
+      <table className="border-collapse w-full">
+        <thead>
+          <tr className="bg-tint-steel">
+            <th className={TH}>LISTING</th>
+            <th className={TH}>PREDICTED FIT</th>
+            <th className={TH}>SCORE</th>
+            <th className={`${TH} hidden sm:table-cell`}>STATUS</th>
+          </tr>
+        </thead>
+        <tbody>
+          {listings.map((l) => {
+            const zone = l.fit?.prediction?.overall ?? null;
+            return (
+              <tr key={l.id}>
+                <td className={TD}>
+                  <Link href={`/search/${l.id}`} className="text-ink hover:text-primary">
+                    {l.effective.title ?? `${marketplaceLabel(l.marketplace)} listing`}
+                  </Link>
+                </td>
+                <td className={TD}>
+                  {zone ? (
+                    <span className={`${FIT_ZONES[zone].bg} border border-ink font-ui font-bold text-[11px] px-2 py-[3px] whitespace-nowrap`}>
+                      {FIT_ZONES[zone].label}
+                    </span>
+                  ) : (
+                    "—"
+                  )}
+                </td>
+                <td className={TD_BOLD}>{l.fit?.score?.score ?? "—"}</td>
+                <td className={`${TD} hidden sm:table-cell`}>{l.purchased ? "Bought" : "Saved"}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 }

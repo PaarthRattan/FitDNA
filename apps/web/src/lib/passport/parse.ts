@@ -25,7 +25,7 @@ export type Parsed<T> = { ok: true; value: T } | { ok: false; errors: FieldError
 
 const CM_PER_INCH = 2.54;
 
-function text(fd: FormData, name: string): string {
+export function text(fd: FormData, name: string): string {
   const v = fd.get(name);
   return typeof v === "string" ? v.trim() : "";
 }
@@ -38,7 +38,7 @@ function number(fd: FormData, name: string): number | null {
   return Number.isFinite(n) && n > 0 && /^\d+(\.\d+)?$/.test(raw) ? n : NaN;
 }
 
-function unit(fd: FormData): Unit | null {
+export function unit(fd: FormData): Unit | null {
   const u = text(fd, "unit") || "cm";
   return u === "cm" || u === "in" ? u : null;
 }
@@ -52,12 +52,12 @@ function rangeMessage(label: string, min: number, max: number): string {
   return `${label} should be between ${min} and ${max} cm (${inches(min)}–${inches(max)} in).`;
 }
 
-function oneOf<T extends string>(value: string, options: ReadonlyArray<{ value: T }>): T | null {
+export function oneOf<T extends string>(value: string, options: ReadonlyArray<{ value: T }>): T | null {
   return options.find((o) => o.value === value)?.value ?? null;
 }
 
 /** Reads a measurement in the form's unit, checks it against a range in cm. */
-function measurement(fd: FormData, name: string, from: Unit, label: string, range: { min: number; max: number }, errors: FieldErrors) {
+export function measurement(fd: FormData, name: string, from: Unit, label: string, range: { min: number; max: number }, errors: FieldErrors) {
   const raw = number(fd, name);
   if (raw === null) return null;
   if (Number.isNaN(raw)) {

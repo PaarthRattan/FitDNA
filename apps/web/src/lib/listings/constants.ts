@@ -1,0 +1,22 @@
+/** Tunable limits for listing import. Change them here, never inline. */
+
+/** Links one user may import per rolling 24 hours. Each new page costs a scrape credit. */
+export const IMPORT_DAILY_CAP = 20;
+
+/** A listing fetched more recently than this isn't fetched again. Matches Firecrawl's default `maxAge`. */
+export const LISTING_CACHE_HOURS = 48;
+
+/** How long an imported listing may be kept. Enforced by a scheduled job from M5. */
+export const LISTING_RETENTION_DAYS = 90;
+
+/** Firecrawl's own page-load timeout. Kept well inside the import page's `maxDuration` (60 s). */
+export const SCRAPE_TIMEOUT_MS = 30_000;
+
+/**
+ * An import still pending after this long was cut off (for example, the platform
+ * stopped the function), so it's shown as timed out rather than polled forever.
+ */
+export const IMPORT_STALE_SECONDS = 75;
+
+/** Page text beyond this is ignored: listing details are near the top. */
+export const MAX_PAGE_CHARS = 200_000;

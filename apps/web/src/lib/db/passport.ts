@@ -1,8 +1,7 @@
 import "server-only";
-import { createClient } from "@/lib/supabase/server";
 import { isUuid } from "@/lib/passport/parse";
 import { passportStatus } from "@/lib/passport/status";
-import { requireUser } from "./auth";
+import { check, signedIn } from "./query";
 
 /**
  * Reads for the Fit Passport. Every function checks the user first; row-level
@@ -10,20 +9,6 @@ import { requireUser } from "./auth";
  * `user_id` filter is a second line of defence. Failures throw: a page that can't
  * load its data should say so, not render as if the user had none.
  */
-
-async function signedIn(returnTo: string) {
-  const user = await requireUser(returnTo);
-  const supabase = await createClient();
-  if (!supabase) throw new Error("Supabase isn't configured");
-  return { user, supabase };
-}
-
-function check<T>(result: { data: T | null; error: { message: string } | null }, what: string): T {
-  if (result.error || result.data === null) {
-    throw new Error(`Couldn't load ${what}: ${result.error?.message ?? "no data returned"}`);
-  }
-  return result.data;
-}
 
 export interface ConsentState {
   granted: boolean;

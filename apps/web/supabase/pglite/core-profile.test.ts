@@ -37,12 +37,21 @@ describe("migrations", () => {
     const { rows } = await db.query<{ tablename: string; rowsecurity: boolean }>(
       "select tablename, rowsecurity from pg_tables where schemaname = 'public' order by tablename",
     );
-    expect(rows).toEqual([
-      { tablename: "body_measurements", rowsecurity: true },
-      { tablename: "consents", rowsecurity: true },
-      { tablename: "fit_preferences", rowsecurity: true },
-      { tablename: "reference_garments", rowsecurity: true },
-    ]);
+    expect(rows).toEqual(
+      [
+        "body_measurements",
+        "consents",
+        "fit_preferences",
+        "listing_extractions",
+        "listing_imports",
+        "listing_overrides",
+        "listings",
+        "price_observations",
+        "purchases",
+        "reference_garments",
+        "saved_listings",
+      ].map((tablename) => ({ tablename, rowsecurity: true })),
+    );
   });
 });
 

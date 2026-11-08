@@ -7,7 +7,7 @@ import { supabaseEnv } from "@/lib/supabase/env";
  * session cookie, so it can redirect early. Every data read checks again with
  * `getUser()` in `src/lib/db/`.
  */
-const PROTECTED_PREFIXES = ["/passport", "/listings"];
+const PROTECTED_PREFIXES = ["/passport", "/listings", "/saved"];
 
 function isProtected(pathname: string): boolean {
   return pathname === "/" || PROTECTED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));

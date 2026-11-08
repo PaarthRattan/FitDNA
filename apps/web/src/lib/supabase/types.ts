@@ -47,6 +47,120 @@ export type Database = {
                   Relationships: [
                     
                   ]
+                },"listing_extractions": {
+                  Row: {
+                    "confidence": number,"content_hash": string | null,"created_at": string,"extractor_version": string,"fields": NonNullable<Json>,"id": string,"listing_id": string,"source": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "confidence": number,"content_hash"?: string | null,"created_at"?: string,"extractor_version": string,"fields": NonNullable<Json>,"id"?: string,"listing_id": string,"source": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "confidence"?: number,"content_hash"?: string | null,"created_at"?: string,"extractor_version"?: string,"fields"?: NonNullable<Json>,"id"?: string,"listing_id"?: string,"source"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "listing_extractions_listing_id_fkey"
+      columns: ["listing_id"]
+isOneToOne: false
+      referencedRelation: "listings"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"listing_imports": {
+                  Row: {
+                    "created_at": string,"error_code": string | null,"id": string,"listing_id": string,"status": string,"updated_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"error_code"?: string | null,"id"?: string,"listing_id": string,"status"?: string,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"error_code"?: string | null,"id"?: string,"listing_id"?: string,"status"?: string,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "listing_imports_listing_id_fkey"
+      columns: ["listing_id"]
+isOneToOne: false
+      referencedRelation: "listings"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"listing_overrides": {
+                  Row: {
+                    "category": string | null,"chest_basis": string | null,"chest_cm": number | null,"cleared": (string)[],"created_at": string,"length_cm": number | null,"listing_id": string,"shoulder_cm": number | null,"size_label": string | null,"sleeve_cm": number | null,"stretch": string | null,"title": string | null,"updated_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "category"?: string | null,"chest_basis"?: string | null,"chest_cm"?: number | null,"cleared"?: (string)[],"created_at"?: string,"length_cm"?: number | null,"listing_id": string,"shoulder_cm"?: number | null,"size_label"?: string | null,"sleeve_cm"?: number | null,"stretch"?: string | null,"title"?: string | null,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "category"?: string | null,"chest_basis"?: string | null,"chest_cm"?: number | null,"cleared"?: (string)[],"created_at"?: string,"length_cm"?: number | null,"listing_id"?: string,"shoulder_cm"?: number | null,"size_label"?: string | null,"sleeve_cm"?: number | null,"stretch"?: string | null,"title"?: string | null,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "listing_overrides_listing_id_fkey"
+      columns: ["listing_id"]
+isOneToOne: false
+      referencedRelation: "listings"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"listings": {
+                  Row: {
+                    "canonical_url": string,"condition": string | null,"content_hash": string | null,"created_at": string,"currency": string | null,"fetched_at": string | null,"id": string,"image_urls": (string)[],"is_demo": boolean,"marketplace": string,"price": number | null,"retention_until": string | null,"seller_rating": number | null,"size_label": string | null,"title": string | null,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "canonical_url": string,"condition"?: string | null,"content_hash"?: string | null,"created_at"?: string,"currency"?: string | null,"fetched_at"?: string | null,"id"?: string,"image_urls"?: (string)[],"is_demo"?: boolean,"marketplace": string,"price"?: number | null,"retention_until"?: string | null,"seller_rating"?: number | null,"size_label"?: string | null,"title"?: string | null,"updated_at"?: string
+                  }
+                  Update: {
+                    "canonical_url"?: string,"condition"?: string | null,"content_hash"?: string | null,"created_at"?: string,"currency"?: string | null,"fetched_at"?: string | null,"id"?: string,"image_urls"?: (string)[],"is_demo"?: boolean,"marketplace"?: string,"price"?: number | null,"retention_until"?: string | null,"seller_rating"?: number | null,"size_label"?: string | null,"title"?: string | null,"updated_at"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"price_observations": {
+                  Row: {
+                    "currency": string,"id": number,"listing_id": string,"observed_at": string,"price": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "currency": string,"id"?: never,"listing_id": string,"observed_at"?: string,"price": number
+                  }
+                  Update: {
+                    "currency"?: string,"id"?: never,"listing_id"?: string,"observed_at"?: string,"price"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "price_observations_listing_id_fkey"
+      columns: ["listing_id"]
+isOneToOne: false
+      referencedRelation: "listings"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"purchases": {
+                  Row: {
+                    "category": string,"engine_version": string,"id": string,"inputs_hash": string,"listing_id": string | null,"listing_title": string | null,"listing_url": string | null,"marketplace": string,"prediction": NonNullable<Json>,"purchased_at": string,"size_label": string | null,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "category": string,"engine_version": string,"id"?: string,"inputs_hash": string,"listing_id"?: string | null,"listing_title"?: string | null,"listing_url"?: string | null,"marketplace": string,"prediction": NonNullable<Json>,"purchased_at"?: string,"size_label"?: string | null,"user_id": string
+                  }
+                  Update: {
+                    "category"?: string,"engine_version"?: string,"id"?: string,"inputs_hash"?: string,"listing_id"?: string | null,"listing_title"?: string | null,"listing_url"?: string | null,"marketplace"?: string,"prediction"?: NonNullable<Json>,"purchased_at"?: string,"size_label"?: string | null,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "purchases_listing_id_fkey"
+      columns: ["listing_id"]
+isOneToOne: false
+      referencedRelation: "listings"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"reference_garments": {
                   Row: {
                     "category": string,"chest_basis": string,"chest_cm": number | null,"created_at": string,"fit_zone": string,"id": string,"length_cm": number | null,"shoulder_cm": number | null,"size_label": string | null,"sleeve_cm": number | null,"stretch": string,"title": string,"updated_at": string,"user_id": string
@@ -60,6 +174,26 @@ export type Database = {
                   }
                   Relationships: [
                     
+                  ]
+                },"saved_listings": {
+                  Row: {
+                    "created_at": string,"listing_id": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"listing_id": string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"listing_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "saved_listings_listing_id_fkey"
+      columns: ["listing_id"]
+isOneToOne: false
+      referencedRelation: "listings"
+      referencedColumns: ["id"]
+    }
                   ]
                 }
           }
