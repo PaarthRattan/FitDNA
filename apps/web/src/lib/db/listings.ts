@@ -3,10 +3,14 @@ import { createHash } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { cache } from "react";
 import { ENGINE_VERSION } from "@/lib/fit/constants";
+import type { PhotoChart } from "@/lib/ai/tasks/listing-photos";
+import type { SizeRecommendation } from "@/lib/fit/types";
 import {
   effectiveListing,
   listingBaseline,
   listingFit,
+  readStoredChart,
+  sizeRecommendation,
   type EffectiveListing,
   type FitContext,
   type ListingFit,
@@ -31,7 +35,7 @@ type Client = SupabaseClient<Database>;
 type OverrideRow = Database["public"]["Tables"]["listing_overrides"]["Row"];
 
 const LISTING_COLUMNS =
-  "id, marketplace, canonical_url, title, price, currency, size_label, condition, seller_rating, is_demo, fetched_at, created_at, listing_extractions (source, fields)" as const;
+  "id, marketplace, canonical_url, title, price, currency, size_label, condition, seller_rating, image_urls, is_demo, fetched_at, created_at, listing_extractions (source, fields)" as const;
 
 /** The most recent imports a list shows. */
 const MAX_LISTINGS = 200;
@@ -188,6 +192,12 @@ export interface ListingDetail {
   override: OverrideRow | null;
   baseline: ReturnType<typeof listingBaseline>;
   own: { title: string | null; size_label: string | null };
+  /** The listing's own photos (URLs only; never fetched for display), and whether they've been read. */
+  photos: string[];
+  photosRead: boolean;
+  /** A size chart read from the photos, and the size that would fit best (signed in). */
+  chart: PhotoChart | null;
+  recommendation: SizeRecommendation | null;
   /** Fingerprint of the prediction's inputs, for a purchase snapshot. Null when signed out. */
   inputsHash: string | null;
 }
@@ -206,10 +216,14 @@ export const loadListing = cache(async (id: string): Promise<ListingDetail | nul
   if (!row) return null;
   const baseline = listingBaseline(row.listing_extractions);
   const own = { title: row.title, size_label: row.size_label };
+  const photos = { photos: row.image_urls, photosRead: row.listing_extractions.some((e) => e.source === "ai_photo") };
+  const chart = readStoredChart(
+    (await supabase.from("size_charts").select("chest_basis, rows, brand").eq("listing_id", id).maybeSingle()).data,
+  );
 
   if (!user) {
     if (!row.is_demo) return null;
-    return { summary: summarise(row, null), signedIn: false, override: null, baseline, own, inputsHash: null };
+    return { summary: summarise(row, null), signedIn: false, override: null, baseline, own, ...photos, chart, recommendation: null, inputsHash: null };
   }
   if (!row.is_demo) {
     const imported = check(
@@ -229,7 +243,17 @@ export const loadListing = cache(async (id: string): Promise<ListingDetail | nul
       }),
     )
     .digest("hex");
-  return { summary, signedIn: true, override: state.overrides.get(id) ?? null, baseline, own, inputsHash };
+  return {
+    summary,
+    signedIn: true,
+    override: state.overrides.get(id) ?? null,
+    baseline,
+    own,
+    ...photos,
+    chart,
+    recommendation: sizeRecommendation(summary.effective, chart, state.context),
+    inputsHash,
+  };
 });
 
 /** Where one of the user's imports stands, or null if it isn't theirs. */

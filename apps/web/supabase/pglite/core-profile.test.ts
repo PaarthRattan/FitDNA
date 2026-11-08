@@ -51,6 +51,7 @@ describe("migrations", () => {
         "purchases",
         "reference_garments",
         "saved_listings",
+        "size_charts",
       ].map((tablename) => ({ tablename, rowsecurity: true })),
     );
   });

@@ -14,7 +14,13 @@ import {
   validateListingText,
 } from "@/lib/ai/tasks/listing-text";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { IMPORT_AI_START_BY_MS, LISTING_CACHE_HOURS, LISTING_RETENTION_DAYS } from "./constants";
+import {
+  IMPORT_AI_START_BY_MS,
+  IMPORT_PHOTOS_START_BY_MS,
+  LISTING_CACHE_HOURS,
+  LISTING_MAX_PHOTOS,
+  LISTING_RETENTION_DAYS,
+} from "./constants";
 import {
   EXTRACTOR_VERSION,
   extractListing,
@@ -22,7 +28,10 @@ import {
   type ListingExtraction,
 } from "./extract-measurements";
 import { scrapeListing, type ScrapeError } from "./firecrawl";
+import { pickListingImages } from "./images";
 import { readPageFacts } from "./metadata";
+import { readListingPhotos } from "./photos";
+import type { Marketplace } from "./url";
 
 /**
  * Runs one listing import, after the request that started it has been answered
@@ -33,7 +42,8 @@ import { readPageFacts } from "./metadata";
  * The page text is processed in memory and never stored: only the extracted fields,
  * a hash of the text, and the page's title, price and image URLs are kept. When the
  * regex pass reads fewer than four measurements, the text (and only the text) is also
- * read by an AI model; see src/lib/ai/tasks/listing-text.ts.
+ * read by an AI model; see src/lib/ai/tasks/listing-text.ts. When the text gives no
+ * measurements at all, the listing's photos are read too (photos.ts).
  */
 
 type Admin = NonNullable<ReturnType<typeof createAdminClient>>;
@@ -77,7 +87,7 @@ async function readWithAi(
   hash: string,
   input: { title: string | null; markdown: string; description: string | null },
   regex: ListingExtraction,
-): Promise<{ sizeLabel: string | null; condition: ListingExtraction["condition"] } | null> {
+): Promise<{ sizeLabel: string | null; condition: ListingExtraction["condition"]; measured: number } | null> {
   if (!aiEnabled() || Object.keys(regex.measurements).length >= 4) return null;
   const model = modelFor("text");
   const version = `${model}:${LISTING_TEXT_PROMPT_VERSION}`;
@@ -119,18 +129,19 @@ async function readWithAi(
     { onConflict: "listing_id,source" },
   );
   if (saved.error) console.error("Listing import: couldn't save the AI reading", listingId, saved.error.message);
-  return { sizeLabel: read.sizeLabel, condition: read.condition };
+  return { sizeLabel: read.sizeLabel, condition: read.condition, measured: Object.keys(kept).length };
 }
 
 async function importListing(admin: Admin, importId: string) {
   const started = Date.now();
   const { data: job, error } = await admin
     .from("listing_imports")
-    .select("id, listing_id, listings (id, canonical_url, title, fetched_at, content_hash)")
+    .select("id, listing_id, listings (id, marketplace, canonical_url, title, fetched_at, content_hash)")
     .eq("id", importId)
     .single();
   if (error || !job?.listings) throw new Error(`import not found: ${error?.message ?? "no listing"}`);
   const listing = job.listings;
+  const marketplace = listing.marketplace as Marketplace;
 
   // Fetched recently, by this user or anyone: reuse it rather than spend a credit.
   if (isFresh(listing.fetched_at)) return finish(admin, importId, null);
@@ -148,6 +159,7 @@ async function importListing(admin: Admin, importId: string) {
       ? await readWithAi(admin, listing.id, hash, { title, markdown: page.markdown, description: facts.description }, extraction)
       : null;
   const now = new Date();
+  const photos = pickListingImages(marketplace, listing.canonical_url, facts.imageUrls, LISTING_MAX_PHOTOS);
 
   const updated = await admin
     .from("listings")
@@ -157,7 +169,7 @@ async function importListing(admin: Admin, importId: string) {
       currency: facts.currency,
       size_label: extraction.sizeLabel ?? ai?.sizeLabel ?? null,
       condition: extraction.condition ?? facts.condition ?? ai?.condition ?? null,
-      image_urls: facts.imageUrls,
+      image_urls: photos,
       content_hash: hash,
       fetched_at: now.toISOString(),
       retention_until: new Date(now.getTime() + LISTING_RETENTION_DAYS * 24 * HOUR_MS).toISOString(),
@@ -185,6 +197,13 @@ async function importListing(admin: Admin, importId: string) {
       { onConflict: "listing_id,source" },
     );
     if (saved.error) throw new Error(`couldn't save the extraction: ${saved.error.message}`);
+  }
+
+  // Nothing in the text at all: the photos may show a tape measure or a size chart.
+  const fromText = Object.keys(extraction.measurements).length + (ai?.measured ?? 0);
+  if (fromText === 0 && photos.length > 0 && Date.now() - started < IMPORT_PHOTOS_START_BY_MS) {
+    const size = extraction.sizeLabel ?? ai?.sizeLabel ?? null;
+    await readListingPhotos(admin, { id: listing.id, marketplace, title, size_label: size, image_urls: photos });
   }
 
   if (facts.price !== null && facts.currency !== null) {

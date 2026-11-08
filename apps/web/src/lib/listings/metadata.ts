@@ -29,7 +29,8 @@ const META_CONDITIONS: Record<string, Condition> = {
 };
 
 const TITLE_MAX = 200;
-const MAX_IMAGES = 8;
+/** Image URLs passed on for the import to choose the listing's photos from. */
+const MAX_IMAGE_CANDIDATES = 200;
 const URL_MAX = 500;
 
 const PRICE_KEYS = ["product:price:amount", "og:price:amount", "productPriceAmount", "ogPriceAmount"];
@@ -80,7 +81,7 @@ function httpsUrls(values: unknown[]): string[] {
       // Not a URL; skip it.
     }
   }
-  return out.slice(0, MAX_IMAGES);
+  return out.slice(0, MAX_IMAGE_CANDIDATES);
 }
 
 export function readPageFacts(metadata: Record<string, unknown>, images: unknown): PageFacts {

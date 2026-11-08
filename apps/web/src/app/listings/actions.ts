@@ -7,8 +7,9 @@ import { loadListing } from "@/lib/db/listings";
 import { IMPORT_DAILY_CAP } from "@/lib/listings/constants";
 import { overrideFromForm } from "@/lib/listings/fit";
 import { runImport } from "@/lib/listings/import";
+import { readListingPhotos } from "@/lib/listings/photos";
 import { LISTING_FORM_FIELDS, parseListingForm } from "@/lib/listings/parse";
-import { parseListingUrl } from "@/lib/listings/url";
+import { parseListingUrl, type Marketplace } from "@/lib/listings/url";
 import { echo, isUuid, type FieldErrors } from "@/lib/passport/parse";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -114,6 +115,31 @@ export async function saveListingFit(_prev: FormState, formData: FormData): Prom
     return { errors: { form: "Couldn't save. Please try again." }, values };
   }
   redirect(`/search/${id}?saved=fit`);
+}
+
+// ---------------------------------------------------------------------------
+// Read the photos
+// ---------------------------------------------------------------------------
+
+/**
+ * Reads a listing's photos on request. A given set of photos is read once, and only
+ * listings the user imported can be read, so the import cap bounds the cost. Runs
+ * within /listings/[id]/edit's `maxDuration`.
+ */
+export async function readPhotos(formData: FormData) {
+  const { id, listing } = await visibleListing(formData);
+  const back = `/listings/${id}/edit`;
+  if (listing.summary.isDemo) redirect(back);
+  const admin = createAdminClient();
+  if (!admin) redirect(`${back}?photos=disabled`);
+  const outcome = await readListingPhotos(admin, {
+    id,
+    marketplace: listing.summary.marketplace as Marketplace,
+    title: listing.own.title,
+    size_label: listing.own.size_label,
+    image_urls: listing.photos,
+  });
+  redirect(`${back}?photos=${outcome}`);
 }
 
 // ---------------------------------------------------------------------------

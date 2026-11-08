@@ -13,6 +13,7 @@ import {
   ConfidenceSeal,
   Eyebrow,
   Photo,
+  Sticker,
   TD,
   TD_BOLD,
   TH,
@@ -193,6 +194,57 @@ export default async function FitMapPage({ params, searchParams }: { params: Par
               </table>
             </div>
           </Card>
+
+          {listing.chart && (
+            <Card>
+              <CardTitleBar>
+                <CardTitle>SIZE CHART</CardTitle>
+                <CardSub>Read by AI from the listing&apos;s photos; check it against them</CardSub>
+              </CardTitleBar>
+              {listing.recommendation && (
+                <div className={`${FIT_ZONES[listing.recommendation.prediction.overall!].bg} border-b border-ink px-4 py-2.5 font-body text-sm`}>
+                  <b>Best size for you: {listing.recommendation.label}.</b> {listing.recommendation.prediction.verdict}
+                </div>
+              )}
+              <div className="overflow-x-auto">
+                <table className="border-collapse w-full">
+                  <thead>
+                    <tr className="bg-tint-steel">
+                      <th className={TH}>SIZE</th>
+                      <th className={TH}>CHEST{listing.chart.chestBasis === "flat" ? " (FLAT)" : ""}</th>
+                      <th className={TH}>SHOULDER</th>
+                      <th className={TH}>LENGTH</th>
+                      <th className={TH}>SLEEVE</th>
+                      {listing.recommendation && <th className={TH}>ON YOU</th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {listing.chart.rows.map((r) => {
+                      const ranked = listing.recommendation?.ranked.find((x) => x.label === r.label);
+                      const cell = (v: number | null) => (v === null ? "—" : `${formatCm(v)} cm`);
+                      return (
+                        <tr key={r.label}>
+                          <td className={TD_BOLD}>
+                            {r.label}
+                            {listing.recommendation?.label === r.label && (
+                              <Sticker rotate={-4} className="ml-2">
+                                BEST
+                              </Sticker>
+                            )}
+                          </td>
+                          <td className={TD}>{cell(r.chest_cm)}</td>
+                          <td className={TD}>{cell(r.shoulder_cm)}</td>
+                          <td className={TD}>{cell(r.length_cm)}</td>
+                          <td className={TD}>{cell(r.sleeve_cm)}</td>
+                          {listing.recommendation && <td className={TD}>{ranked?.overall ? FIT_ZONES[ranked.overall].label : "—"}</td>}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          )}
 
           {score && (
             <Card>

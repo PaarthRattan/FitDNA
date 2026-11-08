@@ -246,7 +246,7 @@ export function validateListingText(raw: unknown, text: string): ListingTextResu
  */
 export function crossCheck(
   ai: Partial<Record<FitPart, ExtractedMeasurement>>,
-  regex: Partial<Record<FitPart, ExtractedMeasurement>>,
+  regex: Partial<Record<FitPart, { cm: number; basis?: ChestBasis }>>,
 ): { kept: Partial<Record<FitPart, ExtractedMeasurement>>; disagreements: FitPart[] } {
   const disagreements = PARTS.filter((p) => {
     const a = ai[p];

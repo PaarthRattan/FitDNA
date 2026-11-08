@@ -12,14 +12,20 @@ import "server-only";
  * development never spend money by accident. Nothing here runs at import time.
  */
 
-/** Model tiers. `text` is the cheap tier for reading listing text. */
-export type AiTier = "text";
+/** Model tiers: `text` reads listing text, `vision` reads listing photos. Same model today. */
+export type AiTier = "text" | "vision";
 
-const DEFAULT_MODELS: Record<AiTier, string> = { text: "deepseek-flash" };
+const DEFAULT_MODELS: Record<AiTier, string> = { text: "deepseek-flash", vision: "deepseek-flash" };
+const MODEL_ENV: Record<AiTier, string> = { text: "AI_MODEL_TEXT", vision: "AI_MODEL_VISION" };
 
 export function modelFor(tier: AiTier): string {
-  return process.env.AI_MODEL_TEXT?.trim() || DEFAULT_MODELS[tier];
+  return process.env[MODEL_ENV[tier]]?.trim() || DEFAULT_MODELS[tier];
 }
+
+/** A user message part: text, or an image inlined as a data URL (never a remote URL). */
+export type ContentPart =
+  | { type: "text"; text: string }
+  | { type: "image_url"; image_url: { url: `data:image/${string};base64,${string}` } };
 
 export function aiEnabled(): boolean {
   return process.env.AI_ENABLED === "true" && Boolean(process.env.DEEPSEEK_API_KEY);
@@ -65,7 +71,7 @@ export async function chatJson({
 }: {
   tier: AiTier;
   system: string;
-  user: string;
+  user: string | ContentPart[];
   maxTokens: number;
 }): Promise<AiResult> {
   const model = modelFor(tier);

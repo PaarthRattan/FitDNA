@@ -209,6 +209,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"size_charts": {
+                  Row: {
+                    "brand": string | null,"chest_basis": string,"created_at": string,"extractor_version": string,"id": string,"listing_id": string,"rows": NonNullable<Json>,"source": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "brand"?: string | null,"chest_basis": string,"created_at"?: string,"extractor_version": string,"id"?: string,"listing_id": string,"rows": NonNullable<Json>,"source": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "brand"?: string | null,"chest_basis"?: string,"created_at"?: string,"extractor_version"?: string,"id"?: string,"listing_id"?: string,"rows"?: NonNullable<Json>,"source"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "size_charts_listing_id_fkey"
+      columns: ["listing_id"]
+isOneToOne: true
+      referencedRelation: "listings"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {

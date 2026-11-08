@@ -42,4 +42,4 @@ yarn-error.log*
 next-env.d.ts
 
 # Model eval reports (npm run eval)
-/evals/**/last-run.txt
+/evals/**/last-run*.txt

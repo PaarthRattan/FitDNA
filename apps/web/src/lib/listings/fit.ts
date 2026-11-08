@@ -1,5 +1,6 @@
 import { FIT_PARTS } from "@/lib/fit/constants";
-import { mergeMeasurements, partValue, predictFit } from "@/lib/fit/engine";
+import type { ChartRow, PhotoChart } from "@/lib/ai/tasks/listing-photos";
+import { mergeMeasurements, partValue, predictFit, recommendSize } from "@/lib/fit/engine";
 import { genericMeasurements } from "@/lib/fit/generic-sizes";
 import { purchaseScore, type Condition, type PurchaseScore } from "@/lib/fit/score";
 import type {
@@ -12,6 +13,8 @@ import type {
   MeasuredValue,
   MeasurementSource,
   ReferenceGarment,
+  SizeChartRow,
+  SizeRecommendation,
   Stretch,
 } from "@/lib/fit/types";
 import { CHEST_BASES, GARMENT_CATEGORIES, GARMENT_FIELDS, STRETCH_OPTIONS } from "@/lib/passport/fields";
@@ -243,6 +246,47 @@ export function listingFit(effective: EffectiveListing, sellerRating: number | n
     sellerRating: sellerRating ?? undefined,
   });
   return { prediction, score, gap: null };
+}
+
+// ---------------------------------------------------------------------------
+// Size charts
+// ---------------------------------------------------------------------------
+
+/** A stored size chart, validated: rows in cm, at least two sizes. */
+export function readStoredChart(row: { chest_basis: string; rows: unknown; brand: string | null } | null): PhotoChart | null {
+  if (!row || !Array.isArray(row.rows)) return null;
+  const basis = oneOf<ChestBasis>(row.chest_basis, ["flat", "circumference"]);
+  if (!basis) return null;
+  const cm = (v: unknown) => (typeof v === "number" && Number.isFinite(v) && v > 0 ? v : null);
+  const rows: ChartRow[] = row.rows.flatMap((r) =>
+    isObject(r) && typeof r.label === "string"
+      ? [{ label: r.label.slice(0, 12), chest_cm: cm(r.chest_cm), shoulder_cm: cm(r.shoulder_cm), length_cm: cm(r.length_cm), sleeve_cm: cm(r.sleeve_cm) }]
+      : [],
+  );
+  return rows.length >= 2 ? { brand: row.brand, chestBasis: basis, rows } : null;
+}
+
+/** Which size in the chart would fit the user best, by the same engine as everything else. */
+export function sizeRecommendation(effective: EffectiveListing, chart: PhotoChart | null, context: FitContext): SizeRecommendation | null {
+  if (!chart || !effective.category || effective.outOfScope) return null;
+  const rows: SizeChartRow[] = chart.rows.map((r) => ({
+    label: r.label,
+    measurements: {
+      ...(r.chest_cm !== null && { chest: { cm: r.chest_cm, basis: chart.chestBasis, source: "ai_photo" as const } }),
+      ...(r.shoulder_cm !== null && { shoulder: { cm: r.shoulder_cm, source: "ai_photo" as const } }),
+      ...(r.length_cm !== null && { length: { cm: r.length_cm, source: "ai_photo" as const } }),
+      ...(r.sleeve_cm !== null && { sleeve: { cm: r.sleeve_cm, source: "ai_photo" as const } }),
+    },
+  }));
+  const recommendation = recommendSize(
+    {
+      body: context.body,
+      references: context.references,
+      candidate: { category: effective.category, stretch: effective.stretch, measurements: effective.measurements },
+    },
+    rows,
+  );
+  return recommendation?.prediction.overall ? recommendation : null;
 }
 
 // ---------------------------------------------------------------------------

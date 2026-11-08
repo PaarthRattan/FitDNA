@@ -24,5 +24,15 @@ export const IMPORT_STALE_SECONDS = 75;
  */
 export const IMPORT_AI_START_BY_MS = 35_000;
 
+/**
+ * Photos are read during an import only if it's this far in: fetching up to four
+ * photos (IMAGE_FETCH_TIMEOUT_MS) and the model call (AI_TIMEOUT_MS) must end inside
+ * the page's 60 s `maxDuration`. Later, the user can still ask for it on the form.
+ */
+export const IMPORT_PHOTOS_START_BY_MS = 28_000;
+
+/** Photos kept per listing (its own, in page order). */
+export const LISTING_MAX_PHOTOS = 8;
+
 /** Page text beyond this is ignored: listing details are near the top. */
 export const MAX_PAGE_CHARS = 200_000;

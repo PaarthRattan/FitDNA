@@ -320,7 +320,7 @@ function toMeasurement(r: Reading, docFlat: boolean): ExtractedMeasurement | nul
 }
 
 /** Chest as a circumference, so a flat and a round reading of the same garment compare equal. */
-export const comparable = (m: ExtractedMeasurement) => (m.basis === "flat" ? m.cm * 2 : m.cm);
+export const comparable = (m: { cm: number; basis?: ChestBasis }) => (m.basis === "flat" ? m.cm * 2 : m.cm);
 
 /** How far apart (cm, chest as a circumference) two readings of one part may be and still agree. */
 export const AGREE_CM: Record<FitPart, number> = { chest: 2, shoulder: 1, length: 1, sleeve: 1 };

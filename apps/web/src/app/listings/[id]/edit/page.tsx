@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { FooterNav, TopBanner } from "@/components/chrome";
 import { Card, CardSub, CardTitle, CardTitleBar, Eyebrow } from "@/components/ui";
+import { aiEnabled } from "@/lib/ai/client";
 import { requireUser } from "@/lib/db/auth";
 import { loadListing } from "@/lib/db/listings";
 import type { Assumption } from "@/lib/listings/extract-measurements";
@@ -9,9 +10,23 @@ import { formInitial, type PartDetail } from "@/lib/listings/fit";
 import { formatPrice } from "@/lib/listings/labels";
 import { importMessage } from "@/lib/listings/status";
 import { marketplaceLabel } from "@/lib/listings/url";
+import { Button } from "@/components/ui";
+import { readPhotos } from "../../actions";
 import { ListingForm } from "./listing-form";
 
 export const metadata: Metadata = { title: "Check the listing's numbers" };
+
+/** Seconds. Also the limit for "Read the photos" (a Server Action on this page). A literal, for Next. */
+export const maxDuration = 60;
+
+const PHOTO_MESSAGES: Record<string, { text: string; ok: boolean }> = {
+  read: { text: "We read the photos. Anything found is filled in below, marked “read by AI from a photo”. Check it against the photos.", ok: true },
+  nothing: { text: "The photos don't show a tape measure or size chart we could read clearly.", ok: false },
+  no_photos: { text: "This listing's photos couldn't be fetched.", ok: false },
+  failed: { text: "Couldn't read the photos just now. Try again in a minute.", ok: false },
+  disabled: { text: "Reading photos is switched off on this server.", ok: false },
+  already: { text: "These photos have already been read.", ok: true },
+};
 
 type Params = Promise<{ id: string }>;
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -44,7 +59,9 @@ function hintFor(detail: PartDetail | undefined): string | undefined {
 
 export default async function EditListingPage({ params, searchParams }: { params: Params; searchParams: SearchParams }) {
   const { id } = await params;
-  const outcome = first((await searchParams).fetch);
+  const query = await searchParams;
+  const outcome = first(query.fetch);
+  const photoMessage = PHOTO_MESSAGES[first(query.photos) ?? ""];
   await requireUser(`/listings/${id}/edit`);
   const listing = await loadListing(id);
   if (!listing) notFound();
@@ -69,6 +86,23 @@ export default async function EditListingPage({ params, searchParams }: { params
           <p role="status" className={`border border-ink px-3 py-2 font-body text-sm max-w-2xl ${outcome === "done" ? "bg-tint-lime" : "bg-tint-peach"}`}>
             {message}
           </p>
+        )}
+        {photoMessage && (
+          <p role="status" className={`border border-ink px-3 py-2 font-body text-sm max-w-2xl ${photoMessage.ok ? "bg-tint-lime" : "bg-tint-peach"}`}>
+            {photoMessage.text}
+          </p>
+        )}
+        {!summary.isDemo && listing.photos.length > 0 && !listing.photosRead && aiEnabled() && (
+          <form action={readPhotos} className="border border-ink bg-tint-sky px-3 py-2.5 font-body text-sm max-w-2xl flex flex-col sm:flex-row sm:items-center gap-2.5">
+            <input type="hidden" name="id" value={summary.id} />
+            <span className="flex-1">
+              Measurements shown in the photos, like a tape measure or a size chart? Up to four of the listing&apos;s photos
+              are sent to DeepSeek&apos;s AI model to read them. Nothing about you is sent.
+            </span>
+            <Button type="submit" size="sm">
+              Read the photos
+            </Button>
+          </form>
         )}
         {summary.effective.outOfScope && (
           <p className="border border-ink bg-tint-salmon px-3 py-2 font-body text-sm max-w-2xl">

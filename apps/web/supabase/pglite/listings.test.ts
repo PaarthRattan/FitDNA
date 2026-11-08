@@ -221,6 +221,49 @@ describe("deletion", () => {
   });
 });
 
+describe("size_charts", () => {
+  const insertChart = (listingId: string) =>
+    db.query(
+      `insert into size_charts (listing_id, chest_basis, rows, source, extractor_version)
+       values ($1, 'flat', '[{"label":"S","chest_cm":50},{"label":"M","chest_cm":53}]', 'ai_photo', 'v1')`,
+      [listingId],
+    );
+
+  it("are visible wherever the listing is, and to no one else", async () => {
+    const id = await insertListing();
+    await insertChart(id);
+    await importFor(ALICE, id);
+    expect(await count(ALICE, "size_charts")).toBe(1);
+    expect(await count(BOB, "size_charts")).toBe(0);
+    expect(await count(null, "size_charts")).toBe(0);
+  });
+
+  it("can't be written by users, and there's one per listing", async () => {
+    const id = await insertListing();
+    await importFor(ALICE, id);
+    await expect(as(db, ALICE, () => insertChart(id))).rejects.toThrow(/row-level security/);
+    await insertChart(id);
+    await expect(insertChart(id)).rejects.toThrow(/duplicate key/);
+  });
+
+  it("need two to twelve sizes", async () => {
+    const id = await insertListing();
+    await expect(
+      db.query(
+        `insert into size_charts (listing_id, chest_basis, rows, source, extractor_version) values ($1, 'flat', '[{"label":"M"}]', 'ai_photo', 'v1')`,
+        [id],
+      ),
+    ).rejects.toThrow(/check constraint/);
+  });
+
+  it("go with their listing", async () => {
+    const id = await insertListing();
+    await insertChart(id);
+    await db.query("delete from listings where id = $1", [id]);
+    expect((await db.query("select * from size_charts")).rows).toHaveLength(0);
+  });
+});
+
 describe("ai_runs", () => {
   it("is closed to every user: no reading, no writing", async () => {
     await db.query(
