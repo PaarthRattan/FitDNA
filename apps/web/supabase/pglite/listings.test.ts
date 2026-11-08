@@ -290,6 +290,53 @@ describe("ai_runs", () => {
   });
 });
 
+describe("fit_feedback", () => {
+  async function purchaseFor(user: string): Promise<string> {
+    const id = await insertListing(`https://www.grailed.com/listings/${user.slice(-1)}${Math.random().toString().slice(2, 8)}`);
+    await importFor(user, id);
+    const { rows } = await db.query<{ id: string }>(
+      `insert into purchases (user_id, listing_id, marketplace, category, prediction, engine_version, inputs_hash)
+       values ($1, $2, 'grailed', 'knit', '{"overall":"ideal"}', '1', 'h') returning id`,
+      [user, id],
+    );
+    return rows[0].id;
+  }
+  const answer = (user: string, purchase: string, overall = "relaxed") =>
+    db.query("insert into fit_feedback (user_id, purchase_id, overall, shoulder) values ($1, $2, $3, 'fitted')", [user, purchase, overall]);
+
+  it("is owner-only", async () => {
+    const p = await purchaseFor(ALICE);
+    await as(db, ALICE, () => answer(ALICE, p));
+    expect(await count(ALICE, "fit_feedback")).toBe(1);
+    expect(await count(BOB, "fit_feedback")).toBe(0);
+    const update = await as(db, BOB, () => db.query("update fit_feedback set overall = 'tight'"));
+    const remove = await as(db, BOB, () => db.query("delete from fit_feedback"));
+    expect(update.affectedRows).toBe(0);
+    expect(remove.affectedRows).toBe(0);
+  });
+
+  it("can't be about someone else's purchase, even under your own name", async () => {
+    const alices = await purchaseFor(ALICE);
+    await expect(as(db, BOB, () => answer(BOB, alices))).rejects.toThrow(/row-level security/);
+    await expect(as(db, BOB, () => answer(ALICE, alices))).rejects.toThrow(/row-level security/);
+  });
+
+  it("is one answer per purchase, in fit zones only, and goes with the purchase", async () => {
+    const p = await purchaseFor(ALICE);
+    await expect(answer(ALICE, p, "huge")).rejects.toThrow(/check constraint/);
+    await answer(ALICE, p);
+    await expect(answer(ALICE, p)).rejects.toThrow(/duplicate key/);
+    await db.query("delete from purchases where id = $1", [p]);
+    expect((await db.query("select * from fit_feedback")).rows).toHaveLength(0);
+  });
+
+  it("is deleted with the user", async () => {
+    await answer(ALICE, await purchaseFor(ALICE));
+    await db.query("delete from auth.users where id = $1", [ALICE]);
+    expect((await db.query("select * from fit_feedback")).rows).toHaveLength(0);
+  });
+});
+
 describe("retention (purge_expired)", () => {
   it("deletes expired listings with their children, keeps purchase snapshots, fresh and demo listings", async () => {
     const expired = await insertListing("https://www.grailed.com/listings/1");

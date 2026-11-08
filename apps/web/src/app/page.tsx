@@ -140,7 +140,17 @@ function RecentPredictions({ listings }: { listings: ListingSummary[] }) {
                   )}
                 </td>
                 <td className={TD_BOLD}>{l.fit?.score?.score ?? "—"}</td>
-                <td className={`${TD} hidden sm:table-cell`}>{l.purchased ? "Bought" : "Saved"}</td>
+                <td className={`${TD} hidden sm:table-cell`}>
+                  {!l.purchased ? (
+                    "Saved"
+                  ) : l.outcome ? (
+                    <>
+                      Bought · fit <b>{FIT_ZONES[l.outcome].label.toLowerCase()}</b>
+                    </>
+                  ) : (
+                    <Link href={`/feedback/${l.purchaseId}`}>Bought · how did it fit?</Link>
+                  )}
+                </td>
               </tr>
             );
           })}

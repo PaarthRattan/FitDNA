@@ -5,6 +5,7 @@ import { cache } from "react";
 import { ENGINE_VERSION } from "@/lib/fit/constants";
 import type { PhotoChart } from "@/lib/ai/tasks/listing-photos";
 import type { SizeRecommendation } from "@/lib/fit/types";
+import { FIT_ZONE_ORDER, type FitZone } from "@/lib/fit-zones";
 import {
   effectiveListing,
   listingBaseline,
@@ -56,12 +57,15 @@ export interface ListingSummary {
   fit: ListingFit | null;
   saved: boolean;
   purchased: boolean;
+  /** The user's purchase of it, and how they said it fit (M7), when they did. */
+  purchaseId: string | null;
+  outcome: FitZone | null;
 }
 
 interface UserState {
   overrides: Map<string, OverrideRow>;
   saved: Map<string, string>;
-  purchased: Map<string, string>;
+  purchased: Map<string, { at: string; id: string; outcome: FitZone | null }>;
   context: FitContext;
   /** Which inputs a prediction used, by identity and edit time, never by value. */
   versions: { body: Array<[string, string]>; references: Array<[string, string]> };
@@ -71,7 +75,7 @@ async function loadUserState(supabase: Client, userId: string): Promise<UserStat
   const [overrides, saved, purchases, body, references] = await Promise.all([
     supabase.from("listing_overrides").select("*").eq("user_id", userId),
     supabase.from("saved_listings").select("listing_id, created_at").eq("user_id", userId),
-    supabase.from("purchases").select("listing_id, purchased_at").eq("user_id", userId),
+    supabase.from("purchases").select("id, listing_id, purchased_at, fit_feedback (overall)").eq("user_id", userId),
     supabase.from("body_measurements").select("name, value_cm, confidence, updated_at").eq("user_id", userId),
     supabase.from("reference_garments").select("*").eq("user_id", userId).order("created_at"),
   ]);
@@ -81,7 +85,11 @@ async function loadUserState(supabase: Client, userId: string): Promise<UserStat
     overrides: new Map(check(overrides, "your corrections").map((o) => [o.listing_id, o])),
     saved: new Map(check(saved, "saved listings").map((s) => [s.listing_id, s.created_at])),
     purchased: new Map(
-      check(purchases, "purchases").flatMap((p) => (p.listing_id ? [[p.listing_id, p.purchased_at] as const] : [])),
+      check(purchases, "purchases").flatMap((p) =>
+        p.listing_id
+          ? [[p.listing_id, { at: p.purchased_at, id: p.id, outcome: FIT_ZONE_ORDER.find((z) => z === p.fit_feedback?.overall) ?? null }] as const]
+          : [],
+      ),
     ),
     context: { body: toBodyMeasurements(bodyRows), references: referenceRows.map(toReferenceGarment) },
     versions: {
@@ -112,6 +120,8 @@ function summarise(row: ListingRow, user: UserState | null): ListingSummary {
     fit: user ? listingFit(effective, row.seller_rating, user.context) : null,
     saved: user?.saved.has(row.id) ?? false,
     purchased: user?.purchased.has(row.id) ?? false,
+    purchaseId: user?.purchased.get(row.id)?.id ?? null,
+    outcome: user?.purchased.get(row.id)?.outcome ?? null,
   };
 }
 
@@ -179,7 +189,8 @@ export async function loadRecentPredictions(limit = 5): Promise<ListingSummary[]
   const { user, supabase } = await signedIn("/");
   const state = await loadUserState(supabase, user.id);
   const latest = new Map<string, string>();
-  for (const [id, at] of [...state.saved, ...state.purchased]) if (!latest.has(id) || at > latest.get(id)!) latest.set(id, at);
+  const actions: Array<[string, string]> = [...state.saved, ...[...state.purchased].map(([id, p]) => [id, p.at] as [string, string])];
+  for (const [id, at] of actions) if (!latest.has(id) || at > latest.get(id)!) latest.set(id, at);
   const ids = [...latest.entries()].sort((a, b) => b[1].localeCompare(a[1])).slice(0, limit).map(([id]) => id);
   const rows = new Map((await listingsByIds(supabase, ids)).map((r) => [r.id, r]));
   return ids.flatMap((id) => (rows.has(id) ? [summarise(rows.get(id)!, state)] : []));

@@ -47,6 +47,26 @@ export type Database = {
                   Relationships: [
                     
                   ]
+                },"fit_feedback": {
+                  Row: {
+                    "chest": string | null,"created_at": string,"id": string,"kept": boolean | null,"length": string | null,"overall": string,"purchase_id": string,"shoulder": string | null,"sleeve": string | null,"updated_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "chest"?: string | null,"created_at"?: string,"id"?: string,"kept"?: boolean | null,"length"?: string | null,"overall": string,"purchase_id": string,"shoulder"?: string | null,"sleeve"?: string | null,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "chest"?: string | null,"created_at"?: string,"id"?: string,"kept"?: boolean | null,"length"?: string | null,"overall"?: string,"purchase_id"?: string,"shoulder"?: string | null,"sleeve"?: string | null,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fit_feedback_purchase_id_fkey"
+      columns: ["purchase_id"]
+isOneToOne: true
+      referencedRelation: "purchases"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"fit_preferences": {
                   Row: {
                     "category": string,"created_at": string,"id": string,"text": string,"updated_at": string,"user_id": string

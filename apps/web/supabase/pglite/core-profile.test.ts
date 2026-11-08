@@ -42,6 +42,7 @@ describe("migrations", () => {
         "ai_runs",
         "body_measurements",
         "consents",
+        "fit_feedback",
         "fit_preferences",
         "listing_extractions",
         "listing_imports",

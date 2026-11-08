@@ -93,7 +93,7 @@ export default async function Page({ searchParams }: { searchParams: SearchParam
               <div className="p-4 font-body text-sm flex flex-col gap-3">
                 <p>
                   Permanently deletes your account and everything in it: measurements, reference garments, fit notes,
-                  consent records, and the listings you imported, corrected, saved or bought. This can&apos;t be undone.
+                  consent records, the listings you imported, corrected, saved or bought, and your fit checks. This can&apos;t be undone.
                 </p>
                 <DeleteAccountForm />
               </div>
