@@ -1,0 +1,9 @@
+# Downloaded assets and data: MHR assets (~4 GB), ANSUR II CSVs, model weights.
+.cache/
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+# Validation study: never commit participants' data or results.
+evals/data/
+evals/last-run.md

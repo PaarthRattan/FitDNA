@@ -30,3 +30,22 @@ jobs:
       - run: npm test
       # Built with no Supabase settings on purpose: nothing may need them at build time.
       - run: npm run build
+
+  scan:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/scan
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.13.7"
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: services/scan/uv.lock
+      # Core and dev tools only: no body model, GPU, weights or tokens. Tests marked `mhr` skip themselves.
+      - run: uv sync --locked --group dev
+      - run: uv run --no-sync ruff check .
+      - run: uv run --no-sync ruff format --check .
+      - run: uv run --no-sync pytest -q

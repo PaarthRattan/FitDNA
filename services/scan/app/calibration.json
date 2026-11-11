@@ -1,0 +1,12 @@
+{
+  "note": "Per-field correction and error of the scan, measured by the validation study (M6d). Until then: no correction, and errors from the literature (research report, 2026-11-10). confidence is what the web app stores; manual tape entries are stored at 60.",
+  "validated": false,
+  "fields": {
+    "chest": { "offset_cm": 0.0, "scale": 1.0, "error_cm": 4.0, "floor_cm": 3.0, "confidence": 45 },
+    "shoulder": { "offset_cm": 0.0, "scale": 1.0, "error_cm": 1.5, "floor_cm": 1.5, "confidence": 55 },
+    "arm": { "offset_cm": 0.0, "scale": 1.0, "error_cm": 2.0, "floor_cm": 2.0, "confidence": 55 },
+    "waist": { "offset_cm": 0.0, "scale": 1.0, "error_cm": 5.0, "floor_cm": 4.0, "confidence": 40 },
+    "hip": { "offset_cm": 0.0, "scale": 1.0, "error_cm": 5.0, "floor_cm": 4.0, "confidence": 40 }
+  },
+  "loose_clothing": { "chest_extra_cm": 3.0, "confidence_penalty": 10 }
+}

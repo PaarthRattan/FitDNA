@@ -1,0 +1,47 @@
+[project]
+name = "fitdna-scan"
+version = "0.1.0"
+description = "FitDNA body scan service: two photos and a height in, body measurements and a faceless avatar out."
+readme = "README.md"
+requires-python = ">=3.12,<3.14"
+# The core (API, validation, measurement geometry, stats, export) needs no GPU and no body model.
+dependencies = [
+  "numpy>=2.0",
+  "pillow>=11.0",
+  "trimesh>=4.8.3,<5",
+  "fastapi>=0.115",
+  "uvicorn>=0.32",
+  "pydantic>=2.9",
+  "scipy>=1.13",
+]
+
+[project.optional-dependencies]
+# The MHR body model on CPU: local development on Apple Silicon or Linux, and the `mhr` tests.
+# The GPU image (modal_app.py) installs pymomentum-gpu and a CUDA torch instead.
+body = [
+  "mhr==1.0.1",
+  "pymomentum-cpu==0.1.114.post0",
+  "torch==2.8.*",
+]
+
+[dependency-groups]
+dev = ["pytest>=8.3", "ruff>=0.8", "httpx>=0.27"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+  "mhr: needs the MHR body model and its assets (uv sync --extra body; MHR_ASSETS or .cache/mhr/assets)",
+  "gpu: needs a CUDA GPU and the SAM 3D Body weights",
+]
+addopts = "-m 'not gpu'"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S"]
+ignore = ["S101"]

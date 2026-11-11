@@ -1,0 +1,613 @@
+{
+  "source": "ANSUR II public CSVs (US Army 2012, https://www.openlab.psu.edu/ansur2/); n male=4082, female=1986. No licence stated on the source page: confirm before shipping to real users.",
+  "fitted": "2026-11-11",
+  "inputs": {
+    "hwa": [
+      "height",
+      "weight",
+      "age"
+    ],
+    "hw": [
+      "height",
+      "weight"
+    ],
+    "ha": [
+      "height",
+      "age"
+    ],
+    "h": [
+      "height"
+    ]
+  },
+  "units": {
+    "height": "cm",
+    "weight": "kg",
+    "age": "years",
+    "outputs": "cm"
+  },
+  "targets": {
+    "chest": "chestcircumference",
+    "shoulder_biacromial": "biacromialbreadth",
+    "arm": "sleeveoutseam",
+    "waist": "waistcircumference",
+    "hip": "buttockcircumference"
+  },
+  "models": {
+    "male": {
+      "hwa": {
+        "chest": {
+          "intercept": 98.19275,
+          "coef": [
+            -0.268745,
+            0.602452,
+            0.111118
+          ],
+          "sd": 3.092,
+          "cv_mae": 2.434
+        },
+        "shoulder_biacromial": {
+          "intercept": 21.03375,
+          "coef": [
+            0.089338,
+            0.060773,
+            -0.011719
+          ],
+          "sd": 1.444,
+          "cv_mae": 1.133
+        },
+        "arm": {
+          "intercept": -4.2867,
+          "coef": [
+            0.362913,
+            -0.001806,
+            0.000608
+          ],
+          "sd": 1.836,
+          "cv_mae": 1.451
+        },
+        "waist": {
+          "intercept": 92.75577,
+          "coef": [
+            -0.396121,
+            0.758667,
+            0.198455
+          ],
+          "sd": 4.068,
+          "cv_mae": 3.222
+        },
+        "hip": {
+          "intercept": 83.1666,
+          "coef": [
+            -0.149614,
+            0.543595,
+            -0.047407
+          ],
+          "sd": 2.602,
+          "cv_mae": 2.044
+        }
+      },
+      "hw": {
+        "chest": {
+          "intercept": 103.64342,
+          "coef": [
+            -0.290944,
+            0.623488
+          ],
+          "sd": 3.232,
+          "cv_mae": 2.554
+        },
+        "shoulder_biacromial": {
+          "intercept": 20.45891,
+          "coef": [
+            0.091679,
+            0.058554
+          ],
+          "sd": 1.447,
+          "cv_mae": 1.137
+        },
+        "arm": {
+          "intercept": -4.2569,
+          "coef": [
+            0.362791,
+            -0.001691
+          ],
+          "sd": 1.836,
+          "cv_mae": 1.451
+        },
+        "waist": {
+          "intercept": 102.49061,
+          "coef": [
+            -0.435768,
+            0.796237
+          ],
+          "sd": 4.402,
+          "cv_mae": 3.517
+        },
+        "hip": {
+          "intercept": 80.84111,
+          "coef": [
+            -0.140143,
+            0.53462
+          ],
+          "sd": 2.632,
+          "cv_mae": 2.059
+        }
+      },
+      "ha": {
+        "chest": {
+          "intercept": 39.16961,
+          "coef": [
+            0.320903,
+            0.342968
+          ],
+          "sd": 7.917,
+          "cv_mae": 6.287
+        },
+        "shoulder_biacromial": {
+          "intercept": 15.07977,
+          "coef": [
+            0.148819,
+            0.011669
+          ],
+          "sd": 1.62,
+          "cv_mae": 1.269
+        },
+        "arm": {
+          "intercept": -4.1098,
+          "coef": [
+            0.361145,
+            -8.7e-05
+          ],
+          "sd": 1.836,
+          "cv_mae": 1.451
+        },
+        "waist": {
+          "intercept": 18.42798,
+          "coef": [
+            0.346422,
+            0.490423
+          ],
+          "sd": 10.039,
+          "cv_mae": 8.023
+        },
+        "hip": {
+          "intercept": 29.90974,
+          "coef": [
+            0.382429,
+            0.161792
+          ],
+          "sd": 7.072,
+          "cv_mae": 5.605
+        }
+      },
+      "h": {
+        "chest": {
+          "intercept": 50.45434,
+          "coef": [
+            0.315544
+          ],
+          "sd": 8.473,
+          "cv_mae": 6.827
+        },
+        "shoulder_biacromial": {
+          "intercept": 15.46372,
+          "coef": [
+            0.148637
+          ],
+          "sd": 1.623,
+          "cv_mae": 1.271
+        },
+        "arm": {
+          "intercept": -4.11268,
+          "coef": [
+            0.361147
+          ],
+          "sd": 1.836,
+          "cv_mae": 1.45
+        },
+        "waist": {
+          "intercept": 34.56448,
+          "coef": [
+            0.338758
+          ],
+          "sd": 10.928,
+          "cv_mae": 8.905
+        },
+        "hip": {
+          "intercept": 35.23321,
+          "coef": [
+            0.3799
+          ],
+          "sd": 7.213,
+          "cv_mae": 5.744
+        }
+      }
+    },
+    "female": {
+      "hwa": {
+        "chest": {
+          "intercept": 93.45508,
+          "coef": [
+            -0.30539,
+            0.698496,
+            0.125547
+          ],
+          "sd": 4.144,
+          "cv_mae": 3.273
+        },
+        "shoulder_biacromial": {
+          "intercept": 13.92759,
+          "coef": [
+            0.125188,
+            0.039779,
+            -0.016398
+          ],
+          "sd": 1.467,
+          "cv_mae": 1.143
+        },
+        "arm": {
+          "intercept": -3.01489,
+          "coef": [
+            0.344774,
+            0.021437,
+            -0.007876
+          ],
+          "sd": 1.781,
+          "cv_mae": 1.424
+        },
+        "waist": {
+          "intercept": 96.33599,
+          "coef": [
+            -0.450088,
+            0.881721,
+            0.114236
+          ],
+          "sd": 4.765,
+          "cv_mae": 3.738
+        },
+        "hip": {
+          "intercept": 84.38811,
+          "coef": [
+            -0.177122,
+            0.684559,
+            0.006775
+          ],
+          "sd": 2.951,
+          "cv_mae": 2.333
+        }
+      },
+      "hw": {
+        "chest": {
+          "intercept": 99.03412,
+          "coef": [
+            -0.329162,
+            0.726921
+          ],
+          "sd": 4.265,
+          "cv_mae": 3.388
+        },
+        "shoulder_biacromial": {
+          "intercept": 13.19891,
+          "coef": [
+            0.128293,
+            0.036067
+          ],
+          "sd": 1.472,
+          "cv_mae": 1.15
+        },
+        "arm": {
+          "intercept": -3.36486,
+          "coef": [
+            0.346265,
+            0.019654
+          ],
+          "sd": 1.781,
+          "cv_mae": 1.424
+        },
+        "waist": {
+          "intercept": 101.41237,
+          "coef": [
+            -0.471719,
+            0.907584
+          ],
+          "sd": 4.852,
+          "cv_mae": 3.838
+        },
+        "hip": {
+          "intercept": 84.6892,
+          "coef": [
+            -0.178405,
+            0.686093
+          ],
+          "sd": 2.951,
+          "cv_mae": 2.333
+        }
+      },
+      "ha": {
+        "chest": {
+          "intercept": 31.81859,
+          "coef": [
+            0.32878,
+            0.32222
+          ],
+          "sd": 7.526,
+          "cv_mae": 6.003
+        },
+        "shoulder_biacromial": {
+          "intercept": 10.41739,
+          "coef": [
+            0.161304,
+            -0.005197
+          ],
+          "sd": 1.509,
+          "cv_mae": 1.181
+        },
+        "arm": {
+          "intercept": -4.90656,
+          "coef": [
+            0.364237,
+            -0.00184
+          ],
+          "sd": 1.79,
+          "cv_mae": 1.431
+        },
+        "waist": {
+          "intercept": 18.53143,
+          "coef": [
+            0.350433,
+            0.362498
+          ],
+          "sd": 9.251,
+          "cv_mae": 7.336
+        },
+        "hip": {
+          "intercept": 23.9815,
+          "coef": [
+            0.444394,
+            0.199523
+          ],
+          "sd": 6.828,
+          "cv_mae": 5.433
+        }
+      },
+      "h": {
+        "chest": {
+          "intercept": 40.23655,
+          "coef": [
+            0.334358
+          ],
+          "sd": 7.988,
+          "cv_mae": 6.421
+        },
+        "shoulder_biacromial": {
+          "intercept": 10.28161,
+          "coef": [
+            0.161214
+          ],
+          "sd": 1.509,
+          "cv_mae": 1.182
+        },
+        "arm": {
+          "intercept": -4.95462,
+          "coef": [
+            0.364205
+          ],
+          "sd": 1.79,
+          "cv_mae": 1.43
+        },
+        "waist": {
+          "intercept": 28.00165,
+          "coef": [
+            0.356708
+          ],
+          "sd": 9.73,
+          "cv_mae": 7.778
+        },
+        "hip": {
+          "intercept": 29.19403,
+          "coef": [
+            0.447847
+          ],
+          "sd": 7.026,
+          "cv_mae": 5.597
+        }
+      }
+    },
+    "any": {
+      "hwa": {
+        "chest": {
+          "intercept": 77.09701,
+          "coef": [
+            -0.171053,
+            0.638843,
+            0.118158
+          ],
+          "sd": 3.705,
+          "cv_mae": 2.915
+        },
+        "shoulder_biacromial": {
+          "intercept": 3.90841,
+          "coef": [
+            0.179673,
+            0.069974,
+            -0.012391
+          ],
+          "sd": 1.745,
+          "cv_mae": 1.377
+        },
+        "arm": {
+          "intercept": -5.7759,
+          "coef": [
+            0.368302,
+            0.004664,
+            -0.001603
+          ],
+          "sd": 1.824,
+          "cv_mae": 1.448
+        },
+        "waist": {
+          "intercept": 98.54462,
+          "coef": [
+            -0.434256,
+            0.780029,
+            0.174018
+          ],
+          "sd": 4.365,
+          "cv_mae": 3.438
+        },
+        "hip": {
+          "intercept": 127.71255,
+          "coef": [
+            -0.391179,
+            0.530536,
+            -0.031207
+          ],
+          "sd": 4.067,
+          "cv_mae": 3.214
+        }
+      },
+      "hw": {
+        "chest": {
+          "intercept": 82.56238,
+          "coef": [
+            -0.193291,
+            0.662223
+          ],
+          "sd": 3.833,
+          "cv_mae": 3.023
+        },
+        "shoulder_biacromial": {
+          "intercept": 3.33529,
+          "coef": [
+            0.182005,
+            0.067522
+          ],
+          "sd": 1.748,
+          "cv_mae": 1.379
+        },
+        "arm": {
+          "intercept": -5.85005,
+          "coef": [
+            0.368603,
+            0.004346
+          ],
+          "sd": 1.824,
+          "cv_mae": 1.447
+        },
+        "waist": {
+          "intercept": 106.59379,
+          "coef": [
+            -0.467007,
+            0.814462
+          ],
+          "sd": 4.601,
+          "cv_mae": 3.655
+        },
+        "hip": {
+          "intercept": 126.26907,
+          "coef": [
+            -0.385306,
+            0.524361
+          ],
+          "sd": 4.075,
+          "cv_mae": 3.226
+        }
+      },
+      "ha": {
+        "chest": {
+          "intercept": -3.09596,
+          "coef": [
+            0.553363,
+            0.350691
+          ],
+          "sd": 8.129,
+          "cv_mae": 6.492
+        },
+        "shoulder_biacromial": {
+          "intercept": -4.87526,
+          "coef": [
+            0.259019,
+            0.013079
+          ],
+          "sd": 1.917,
+          "cv_mae": 1.514
+        },
+        "arm": {
+          "intercept": -6.36131,
+          "coef": [
+            0.37359,
+            9.5e-05
+          ],
+          "sd": 1.825,
+          "cv_mae": 1.448
+        },
+        "waist": {
+          "intercept": 0.62881,
+          "coef": [
+            0.450258,
+            0.457941
+          ],
+          "sd": 9.854,
+          "cv_mae": 7.841
+        },
+        "hip": {
+          "intercept": 61.11514,
+          "coef": [
+            0.210422,
+            0.161903
+          ],
+          "sd": 7.256,
+          "cv_mae": 5.77
+        }
+      },
+      "h": {
+        "chest": {
+          "intercept": 4.99754,
+          "coef": [
+            0.567032
+          ],
+          "sd": 8.678,
+          "cv_mae": 7.029
+        },
+        "shoulder_biacromial": {
+          "intercept": -4.5734,
+          "coef": [
+            0.259529
+          ],
+          "sd": 1.92,
+          "cv_mae": 1.517
+        },
+        "arm": {
+          "intercept": -6.35913,
+          "coef": [
+            0.373594
+          ],
+          "sd": 1.824,
+          "cv_mae": 1.448
+        },
+        "waist": {
+          "intercept": 11.19751,
+          "coef": [
+            0.468108
+          ],
+          "sd": 10.623,
+          "cv_mae": 8.612
+        },
+        "hip": {
+          "intercept": 64.85166,
+          "coef": [
+            0.216733
+          ],
+          "sd": 7.39,
+          "cv_mae": 5.871
+        }
+      }
+    }
+  },
+  "shoulder_arc_from_biacromial": {
+    "intercept": 14.0568,
+    "slope": 0.86935,
+    "sd": 2.136,
+    "source": "MHR 1.0.1, 400 random bodies (20 body coefficients ~ N(0,1), scales ~ N(0,0.05))"
+  }
+}
