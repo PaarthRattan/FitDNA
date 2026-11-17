@@ -101,6 +101,7 @@ Errors: `{"error": code}`.
 - [ ] SAM 3D Body: does `process_one_image` take an RGB array? Does the code at the pinned commit (`app/schema.py`: `b5c765a`, weights `11aaa346`) build with the image's torch 2.8 and CUDA 12.8? The weights repo bundles its own `assets/mhr_model.pt`: check it's the same MHR 1.0.1.
 - [ ] MediaPipe Pose Landmarker runs in the Modal image; landmarks and masks match `app/recon.py`'s assumptions.
 - [ ] Timings and memory on an L4: cold start, warm scan (target ≤ 90 s end to end).
+- [ ] Modal answers a web request still running after about 150 s with a 303 redirect to poll. The web app never follows redirects (they would carry the signature and proxy secret) and counts one as a timeout, so cold start plus scan must stay under 150 s, or the service needs `REQUEST_BUDGET_SECONDS` lowered from 200. Verify the limit and the behaviour.
 - [ ] Modal: `region="ca"` on the account's plan; DPA and sub-processors.
 - [ ] Developer repeatability: 5 scans, shoulder and arm within 1 cm.
 

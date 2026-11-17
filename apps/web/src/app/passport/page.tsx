@@ -7,6 +7,7 @@ import {
   CardSub,
   CardTitle,
   CardTitleBar,
+  Chip,
   ChipRow,
   ConfidenceBar,
   CtaBlock,
@@ -17,6 +18,7 @@ import {
 } from "@/components/ui";
 import { FIT_ZONES } from "@/lib/fit-zones";
 import { loadPassport } from "@/lib/db/passport";
+import { hasAvatar } from "@/lib/db/scan";
 import { formatCm } from "@/lib/fit/templates";
 import { BODY_FIELDS } from "@/lib/passport/fields";
 import { asZone, categoryLabel, measurementChips } from "@/lib/passport/mappers";
@@ -30,14 +32,22 @@ const SAVED: Record<string, string> = {
   garment: "Garment saved.",
   deleted: "Garment deleted.",
   preferences: "Fit notes saved.",
+  scan: "Scanned measurements saved.",
+  "scan-none": "Nothing ticked, so your passport is unchanged.",
+  "scan-deleted": "Scan deleted.",
+  "avatar-deleted": "Avatar deleted.",
 };
 
 const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 
 export default async function PassportPage({ searchParams }: { searchParams: SearchParams }) {
   const saved = SAVED[first((await searchParams).saved) ?? ""];
-  const { consent, measurements, references, preferences, status } = await loadPassport("/passport");
+  const [{ consent, measurements, references, preferences, status }, avatar] = await Promise.all([
+    loadPassport("/passport"),
+    hasAvatar("/passport"),
+  ]);
   const measured = new Map(measurements.map((m) => [m.name, m]));
+  const anyScanned = measurements.some((m) => m.source === "scan");
 
   return (
     <>
@@ -75,7 +85,7 @@ export default async function PassportPage({ searchParams }: { searchParams: Sea
           <Card>
             <CardTitleBar>
               <CardTitle>BODY MEASUREMENTS</CardTitle>
-              <CardSub>Entered by you with a tape</CardSub>
+              <CardSub>{anyScanned ? "From a tape measure or a photo scan" : "Entered by you with a tape"}</CardSub>
               <span className="flex-1" />
               {consent.granted && (
                 <Button size="sm" variant="secondary" href="/passport/measure">
@@ -92,6 +102,7 @@ export default async function PassportPage({ searchParams }: { searchParams: Sea
                       <th className={TH}>VALUE</th>
                       <th className={`${TH} hidden sm:table-cell`}>RANGE</th>
                       <th className={TH}>CONFIDENCE</th>
+                      <th className={`${TH} hidden sm:table-cell`}>SOURCE</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -103,6 +114,7 @@ export default async function PassportPage({ searchParams }: { searchParams: Sea
                           <td className={`${TD_BOLD} whitespace-nowrap`}>{m ? `${formatCm(m.value_cm)} cm` : "—"}</td>
                           <td className={`${TD} text-[#333] whitespace-nowrap hidden sm:table-cell`}>{m?.range_cm ? `±${formatCm(m.range_cm)} cm` : "—"}</td>
                           <td className={TD}>{m ? <ConfidenceBar pct={m.confidence} /> : <Link href="/passport/measure">Add</Link>}</td>
+                          <td className={`${TD} hidden sm:table-cell`}>{m ? <Chip>{m.source === "scan" ? "SCAN" : "TAPE"}</Chip> : null}</td>
                         </tr>
                       );
                     })}
@@ -117,6 +129,29 @@ export default async function PassportPage({ searchParams }: { searchParams: Sea
                 </div>
               </div>
             )}
+          </Card>
+
+          <Card>
+            <CardTitleBar>
+              <CardTitle>PHOTO SCAN</CardTitle>
+              <CardSub>Optional: estimates from two photos</CardSub>
+            </CardTitleBar>
+            <div className="px-4 py-3 font-body text-sm flex flex-col gap-3">
+              <p>
+                Estimate your chest, shoulder width and arm length from a front and a side photo, and see a faceless 3D
+                avatar of your body shape. Photos are never stored. A tape measure is still the most accurate.
+              </p>
+              <div className="flex gap-2 flex-wrap">
+                <Button size="sm" href="/passport/scan">
+                  {avatar ? "Scan again" : "Scan"}
+                </Button>
+                {avatar && (
+                  <Button size="sm" variant="secondary" href="/passport/avatar">
+                    Your avatar
+                  </Button>
+                )}
+              </div>
+            </div>
           </Card>
 
           <Card>

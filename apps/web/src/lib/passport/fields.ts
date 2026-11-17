@@ -82,4 +82,4 @@ export const TITLE_MAX_LENGTH = 80;
 export const SIZE_MAX_LENGTH = 20;
 
 /** Version of the consent text in /passport/consent. Bump it whenever that text changes. */
-export const CONSENT_POLICY_VERSION = "2026-11-07";
+export const CONSENT_POLICY_VERSION = "2026-11-16";

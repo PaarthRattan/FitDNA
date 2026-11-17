@@ -13,7 +13,10 @@ const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v
 
 /** What we ask agreement to. Change CONSENT_POLICY_VERSION whenever this text changes. */
 const TERMS: Array<[string, string]> = [
-  ["What we keep", "Three body measurements that you enter yourself: chest, shoulder width and arm length. Nothing else about your body."],
+  [
+    "What we keep",
+    "Three body measurements: chest, shoulder width and arm length, typed in by you or, if you choose, taken from a photo scan. Nothing else about your body.",
+  ],
   ["Why", "Only to predict how garments will fit you. We don't use them for anything else, and we never sell them."],
   [
     "Who handles them",
@@ -23,7 +26,10 @@ const TERMS: Array<[string, string]> = [
     "How long, and how to stop",
     "Until you remove them. Change or delete them any time, withdraw this consent (which deletes them), or delete your whole account from Settings.",
   ],
-  ["Photo scans", "Body scans aren't available yet. When they are, they'll ask for separate consent first."],
+  [
+    "Photo scans",
+    "Optional. A scan asks for its own consent first, which explains where the photos go and what it keeps. Withdrawing this consent also deletes everything from scans.",
+  ],
 ];
 
 export default async function ConsentPage({ searchParams }: { searchParams: SearchParams }) {

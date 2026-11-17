@@ -40,6 +40,7 @@ describe("migrations", () => {
     expect(rows).toEqual(
       [
         "ai_runs",
+        "avatars",
         "body_measurements",
         "consents",
         "fit_feedback",
@@ -52,6 +53,7 @@ describe("migrations", () => {
         "purchases",
         "reference_garments",
         "saved_listings",
+        "scans",
         "size_charts",
       ].map((tablename) => ({ tablename, rowsecurity: true })),
     );

@@ -16,14 +16,15 @@ export interface ConsentState {
   at: string | null;
 }
 
-export async function loadConsent(returnTo: string): Promise<ConsentState> {
+/** The user's current consent for body data (`data`) or for photo scans (`scan`). */
+export async function loadConsent(returnTo: string, scope: "data" | "scan" = "data"): Promise<ConsentState> {
   const { user, supabase } = await signedIn(returnTo);
   const rows = check(
     await supabase
       .from("consents")
       .select("action, created_at")
       .eq("user_id", user.id)
-      .eq("scope", "data")
+      .eq("scope", scope)
       .order("id", { ascending: false })
       .limit(1),
     "consent",

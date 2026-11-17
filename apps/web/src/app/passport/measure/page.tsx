@@ -13,6 +13,7 @@ export default async function MeasurePage() {
   if (!passport.consent.granted) redirect("/passport/consent?next=/passport/measure");
 
   const initial = Object.fromEntries(passport.measurements.map((m) => [m.name, formatCm(m.value_cm)]));
+  const scanned = passport.measurements.some((m) => m.source === "scan");
 
   return (
     <>
@@ -24,7 +25,13 @@ export default async function MeasurePage() {
             <CardTitle>MEASURE WITH A SOFT TAPE</CardTitle>
             <CardSub>Wear a thin top or none. Stand relaxed; don&apos;t pull the tape tight.</CardSub>
           </CardTitleBar>
-          <div className="p-4">
+          <div className="p-4 flex flex-col gap-4">
+            {scanned && (
+              <p className="border border-ink bg-tint-sky px-3 py-2 font-body text-sm">
+                Some of these came from a photo scan. Leave a value as it is to keep it; type a new number to replace it
+                with your tape measurement.
+              </p>
+            )}
             <MeasurementsForm initial={initial} />
           </div>
         </Card>

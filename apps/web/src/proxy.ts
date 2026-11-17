@@ -53,6 +53,6 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Everything except static assets and image optimisation.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"],
+  // Everything except static assets, image optimisation and the scan page's pose checker.
+  matcher: ["/((?!_next/static|_next/image|mediapipe/|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"],
 };

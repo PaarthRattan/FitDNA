@@ -6,7 +6,7 @@ import { getUser } from "@/lib/db/auth";
 import { loadConsent } from "@/lib/db/passport";
 import { supabaseEnv } from "@/lib/supabase/env";
 import { signOut } from "../login/actions";
-import { withdrawConsent } from "../passport/actions";
+import { withdrawConsent, withdrawScanConsent } from "../passport/actions";
 import { DeleteAccountForm } from "./delete-account-form";
 
 export const metadata: Metadata = { title: "Settings" };
@@ -14,19 +14,26 @@ export const metadata: Metadata = { title: "Settings" };
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 export default async function Page({ searchParams }: { searchParams: SearchParams }) {
-  const withdrawn = (await searchParams).consent === "withdrawn";
+  const withdrawn = (await searchParams).consent;
   const user = await getUser();
   const configured = supabaseEnv() !== null;
-  const consent = user ? await loadConsent("/settings") : null;
+  const [consent, scanConsent] = user
+    ? await Promise.all([loadConsent("/settings"), loadConsent("/settings", "scan")])
+    : [null, null];
 
   return (
     <>
       <TopBanner title="Settings" />
       <Eyebrow tint="salmon">Settings</Eyebrow>
       <main className="p-5 flex-1 flex flex-col gap-5">
-        {withdrawn && (
+        {withdrawn === "withdrawn" && (
           <p role="status" className="border border-ink bg-tint-lime px-3 py-2 font-ui font-bold text-xs max-w-xl">
-            Consent withdrawn. Your body measurements have been deleted.
+            Consent withdrawn. Your body measurements, scans and avatar have been deleted.
+          </p>
+        )}
+        {withdrawn === "scan-withdrawn" && (
+          <p role="status" className="border border-ink bg-tint-lime px-3 py-2 font-ui font-bold text-xs max-w-xl">
+            Photo-scan consent withdrawn. Your scans, your avatar and the measurements taken from scans have been deleted.
           </p>
         )}
 
@@ -70,7 +77,8 @@ export default async function Page({ searchParams }: { searchParams: SearchParam
                   <>
                     <p>
                       You&apos;ve agreed to us keeping your body measurements.{" "}
-                      <Link href="/passport/consent">What that covers</Link>. Withdrawing deletes them straight away.
+                      <Link href="/passport/consent">What that covers</Link>. Withdrawing deletes them straight away, along
+                      with your scans and avatar.
                     </p>
                     <form action={withdrawConsent}>
                       <Button type="submit" variant="secondary">
@@ -86,14 +94,34 @@ export default async function Page({ searchParams }: { searchParams: SearchParam
               </div>
             </Card>
 
+            {scanConsent?.granted && (
+              <Card className="max-w-xl">
+                <CardTitleBar>
+                  <CardTitle>PHOTO SCAN CONSENT</CardTitle>
+                </CardTitleBar>
+                <div className="p-4 font-body text-sm flex flex-col gap-3">
+                  <p>
+                    You&apos;ve agreed to photo scans. <Link href="/passport/scan/consent">What that covers</Link>. Withdrawing
+                    deletes your scans, your avatar and any measurements taken from scans; tape measurements stay.
+                  </p>
+                  <form action={withdrawScanConsent}>
+                    <Button type="submit" variant="secondary">
+                      Withdraw and delete my scans
+                    </Button>
+                  </form>
+                </div>
+              </Card>
+            )}
+
             <Card className="max-w-xl">
               <CardTitleBar>
                 <CardTitle>DELETE MY DATA</CardTitle>
               </CardTitleBar>
               <div className="p-4 font-body text-sm flex flex-col gap-3">
                 <p>
-                  Permanently deletes your account and everything in it: measurements, reference garments, fit notes,
-                  consent records, the listings you imported, corrected, saved or bought, and your fit checks. This can&apos;t be undone.
+                  Permanently deletes your account and everything in it: measurements, scans and your avatar, reference
+                  garments, fit notes, consent records, the listings you imported, corrected, saved or bought, and your fit
+                  checks. This can&apos;t be undone.
                 </p>
                 <DeleteAccountForm />
               </div>

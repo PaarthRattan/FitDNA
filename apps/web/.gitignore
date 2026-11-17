@@ -43,3 +43,6 @@ next-env.d.ts
 
 # Model eval reports (npm run eval)
 /evals/**/last-run*.txt
+
+# The scan page's pose checker, copied and downloaded by scripts/mediapipe-assets.mjs
+/public/mediapipe/

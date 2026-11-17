@@ -357,7 +357,7 @@ describe("retention (purge_expired)", () => {
     await db.query("insert into ai_runs (task, model, prompt_version, input_hash, status) values ('t', 'm', 'v', $1, 'ok')", ["e".repeat(64)]);
 
     const { rows } = await db.query("select * from purge_expired()");
-    expect(rows).toEqual([{ listings_deleted: 2, ai_runs_deleted: 1 }]);
+    expect(rows).toEqual([{ listings_deleted: 2, ai_runs_deleted: 1, scans_deleted: 0 }]);
     const left = await db.query<{ id: string }>("select id from listings order by canonical_url");
     expect(left.rows.map((r) => r.id).sort()).toEqual([fresh, demo].sort());
     for (const table of ["listing_extractions", "price_observations", "listing_imports"]) {

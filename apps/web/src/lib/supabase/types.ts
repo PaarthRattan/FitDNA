@@ -19,6 +19,26 @@ export type Database = {
                   Relationships: [
                     
                   ]
+                },"avatars": {
+                  Row: {
+                    "body_coeffs": (number)[],"body_scales": NonNullable<Json>,"created_at": string,"glb_bytes": number,"pipeline_version": string,"scan_id": string,"shape_layout": string,"storage_path": string,"updated_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "body_coeffs": (number)[],"body_scales": NonNullable<Json>,"created_at"?: string,"glb_bytes": number,"pipeline_version": string,"scan_id": string,"shape_layout": string,"storage_path": string,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "body_coeffs"?: (number)[],"body_scales"?: NonNullable<Json>,"created_at"?: string,"glb_bytes"?: number,"pipeline_version"?: string,"scan_id"?: string,"shape_layout"?: string,"storage_path"?: string,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "avatars_user_id_scan_id_fkey"
+      columns: ["user_id","scan_id"]
+isOneToOne: false
+      referencedRelation: "scans"
+      referencedColumns: ["user_id","id"]
+    }
+                  ]
                 },"body_measurements": {
                   Row: {
                     "confidence": number,"created_at": string,"id": string,"name": string,"range_cm": number | null,"source": string,"updated_at": string,"user_id": string,"value_cm": number,"vendor_job_id": string | null
@@ -229,6 +249,20 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"scans": {
+                  Row: {
+                    "adult_attested": boolean,"created_at": string,"error_code": string | null,"height_cm": number,"id": string,"pipeline_version": string | null,"result": Json | null,"status": string,"updated_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "adult_attested": boolean,"created_at"?: string,"error_code"?: string | null,"height_cm": number,"id"?: string,"pipeline_version"?: string | null,"result"?: Json | null,"status"?: string,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "adult_attested"?: boolean,"created_at"?: string,"error_code"?: string | null,"height_cm"?: number,"id"?: string,"pipeline_version"?: string | null,"result"?: Json | null,"status"?: string,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"size_charts": {
                   Row: {
                     "brand": string | null,"chest_basis": string,"created_at": string,"extractor_version": string,"id": string,"listing_id": string,"rows": NonNullable<Json>,"source": string,"updated_at": string
@@ -260,7 +294,7 @@ isOneToOne: true
                            },
 "purge_expired":
 { Args: Record<PropertyKey, never>; Returns: {
-              "ai_runs_deleted": number,"listings_deleted": number
+              "ai_runs_deleted": number,"listings_deleted": number,"scans_deleted": number
             }[]
                            }
           }
